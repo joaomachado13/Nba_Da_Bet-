@@ -55,12 +55,15 @@
       return false;
     }
 
-    if (session.user.is_anonymous) {
-      location.replace("login.html?complete=1");
+    const { data: verified, error: userError } = await window.APP_SUPABASE.auth.getUser();
+
+    if (userError || !verified?.user || verified.user.is_anonymous) {
+      await window.APP_SUPABASE.auth.signOut();
+      location.replace("login.html");
       return false;
     }
 
-    currentUser = session.user;
+    currentUser = verified.user;
     currentAccessToken = session.access_token;
     return true;
   }
@@ -613,11 +616,14 @@
     updateRoundStatus();
     setInterval(updateRoundStatus, 1000);
 
-    document.querySelector("#profileButton").addEventListener("click", () => location.href = "login.html");
-    document.querySelector("#statsButton").addEventListener("click", () => showToast("Estatísticas entram na próxima etapa."));
-    document.querySelector("#moreButton").addEventListener("click", () => showToast("Mais opções entram na próxima etapa."));
+    document.querySelector("#profileButton")?.addEventListener("click", () => location.href = "mais.html");
+    document.querySelector("#statsButton")?.addEventListener("click", () => location.href = "estatisticas.html");
+    document.querySelector("#moreButton")?.addEventListener("click", () => location.href = "mais.html");
     document.querySelectorAll(".desktop-action").forEach(button => {
-      button.addEventListener("click", () => showToast(button.dataset.message));
+      button.addEventListener("click", () => {
+        const target = button.dataset.target;
+        if (target) location.href = target;
+      });
     });
     setupInfoDialog();
 
