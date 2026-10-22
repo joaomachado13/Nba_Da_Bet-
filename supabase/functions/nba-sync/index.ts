@@ -255,6 +255,21 @@ async function sync(mode: "fast" | "full") {
 Deno.serve(async (req) => {
   if (req.method !== "POST") return Response.json({ error: "POST required" }, { status: 405 });
 
+  const { data: config, error: configError } = await admin
+    .from("nba_sync_config")
+    .select("sync_secret")
+    .eq("id", 1)
+    .maybeSingle();
+
+  if (configError || !config?.sync_secret) {
+    console.error("NBA sync config unavailable:", configError);
+    return Response.json({ error: "sync config unavailable" }, { status: 500 });
+  }
+
+  if (req.headers.get("x-sync-secret") !== config.sync_secret) {
+    return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
+
   let mode: "fast" | "full" = "fast";
   try {
     const body = await req.json().catch(() => ({}));
