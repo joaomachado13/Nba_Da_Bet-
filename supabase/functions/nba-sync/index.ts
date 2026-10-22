@@ -46,7 +46,7 @@ function dateOffsetKey(base: Date, days: number) {
 }
 
 function startIso(game: any) {
-  for (const value of [game?.gameTimeUTC, game?.gameDateTimeUTC, game?.gameDateTimeEst, game?.gameDate]) {
+  for (const value of [game?.gameDateTimeUTC, game?.gameDateTimeEst, game?.gameDate, game?.gameTimeUTC]) {
     if (!value) continue;
     const parsed = new Date(value);
     if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
@@ -209,6 +209,14 @@ async function sync(mode: "fast" | "full") {
     const maxKey = dateOffsetKey(now, 10);
     rows = all.filter(row => row.round_date >= minKey && row.round_date <= maxKey);
     source = "nba-schedule";
+    console.log("NBA full sync window", {
+      all: all.length,
+      selected: rows.length,
+      minKey,
+      maxKey,
+      first: rows[0]?.round_date || null,
+      last: rows.at(-1)?.round_date || null
+    });
   } else {
     try {
       rows = await scoreboardRows();
@@ -235,7 +243,13 @@ async function sync(mode: "fast" | "full") {
     }
   }
 
-  return { count: await upsertRows(rows), source };
+  const roundDates = rows.map(row => row.round_date).sort();
+  return {
+    count: await upsertRows(rows),
+    source,
+    first_round: roundDates[0] || null,
+    last_round: roundDates.at(-1) || null
+  };
 }
 
 Deno.serve(async (req) => {
@@ -246,6 +260,20 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     if (body?.mode === "full") mode = "full";
   } catch {}
+
+  const minIntervalMs = mode === "fast" ? 120000 : 3600000;
+  const { data: lastRun } = await admin
+    .from("nba_sync_runs")
+    .select("finished_at,status")
+    .eq("mode", mode)
+    .eq("status", "success")
+    .order("finished_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (lastRun?.finished_at && (Date.now() - new Date(lastRun.finished_at).getTime()) < minIntervalMs) {
+    return Response.json({ ok: true, mode, skipped: true, reason: "recent-sync" }, { status: 202 });
+  }
 
   const { data: run, error: runError } = await admin
     .from("nba_sync_runs")
