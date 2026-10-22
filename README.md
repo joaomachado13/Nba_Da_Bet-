@@ -1,34 +1,58 @@
-# Bolão NBA · v0.8
+# Bolão NBA
 
-Frontend em HTML/CSS/JS puro conectado ao projeto Supabase `Nba_da_bet`.
+Bolão privado de palpites da NBA, em HTML/CSS/JS puro, hospedado no Vercel e conectado ao Supabase.
 
-## Funcionamento real
-- Autenticação: Supabase Auth por magic link.
-- Jogos: tabela `games` no Supabase.
-- Palpites: tabela `predictions` com RLS.
-- Trava: primeiro jogo válido da rodada (`round_date`).
-- Revelação: outros palpites só ficam visíveis após a trava.
-- Ranking: view `standings`, 1 ponto por vencedor correto.
-- Perfil: tabela `profiles`, criada automaticamente no primeiro cadastro.
-- Fuso exibido: `America/Sao_Paulo`.
+## Produção
 
-## Dados iniciais
-O banco foi populado com a rodada de 22/10/2026 (2 jogos) e 23/10/2026 (12 jogos).
+- Site: `https://nbadabet.vercel.app/`
+- Frontend: Vercel via GitHub `main`
+- Auth + Banco + sincronização: Supabase `Nba_da_bet`
+- Fuso oficial do bolão: `America/Sao_Paulo`
+- Virada operacional da rodada: 06:00 BRT
 
-## Rodar localmente
-Use um servidor HTTP, não abra por `file://`:
+## Entrada
 
-```bash
-python -m http.server 8080
-```
+Na primeira entrada o participante informa:
+- nome;
+- e-mail;
+- código da sala.
 
-Abra `http://localhost:8080`.
+A sessão fica persistida no navegador. O e-mail permite recuperar o mesmo jogador em outro aparelho/navegador.
 
-### Magic link
-No Supabase Auth, o endereço usado pelo app precisa estar na lista de Redirect URLs. Durante desenvolvimento, adicione `http://localhost:8080/**`. Quando o Cloudflare for publicado, adicione também o domínio final.
+## Regra da rodada
+
+A rodada fecha no início do **primeiro jogo válido do dia**. Depois desse horário nenhum palpite daquela rodada pode ser criado ou alterado.
+
+## Automação NBA
+
+A função `nba-sync` no Supabase consulta as fontes oficiais da NBA e grava/atualiza `public.games`.
+
+### Calendário
+- sincroniza uma janela de ontem até +8 dias;
+- roda a cada 6 horas;
+- adiciona jogos novos e atualiza mudanças de horário/adiamentos.
+
+### Ao vivo / resultados
+- consulta o scoreboard da NBA;
+- roda a cada 10 minutos;
+- atualiza `scheduled → live → final`, records e placares.
+
+Quando um jogo vira `final`, a view `standings` já recalcula a pontuação automaticamente.
+
+O estado da última execução fica em `public.nba_sync_state`.
+
+## Banco
+
+- `profiles`: jogadores.
+- `games`: calendário e resultados oficiais.
+- `predictions`: palpites.
+- `daily_rounds`: horário de fechamento por rodada.
+- `standings`: ranking calculado.
+- `nba_sync_state`: monitoramento da integração NBA.
 
 ## Segurança
-- Publishable key no navegador.
-- Nenhuma secret/service-role key no frontend.
-- RLS ativo em `profiles`, `games` e `predictions`.
-- Advisor de segurança do Supabase sem alertas após a configuração.
+
+- somente publishable key no frontend;
+- RLS ativo nas tabelas de usuário;
+- escrita em `games` acontece apenas no backend;
+- o sincronizador só aceita modos fixos e só grava dados obtidos diretamente das fontes NBA.
