@@ -62,7 +62,7 @@
 
       if (error || !data?.session) {
         console.warn("[Bolão] Login:", error);
-        showToast("Este acesso ainda não foi atualizado. Abra o bolão uma vez no aparelho onde você já estava conectado e tente novamente.");
+        showToast("Este jogador ainda precisa concluir a atualização do acesso no navegador onde já está conectado.");
         return;
       }
 

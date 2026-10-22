@@ -737,6 +737,10 @@
   async function init() {
     const authenticated = await requireUser();
     if (!authenticated) return;
+
+    // Migração única: habilita e-mail + senha da sala para esta conta.
+    // Depois disso, novos logins podem coexistir em qualquer navegador/aparelho.
+    await migrateRoomLogin();
     await loadProfile();
     document.querySelector("#todayLabel").textContent = formatRoundDate(todayKey());
     games = await resolveGames();
