@@ -55,6 +55,11 @@
       return false;
     }
 
+    if (session.user.is_anonymous) {
+      location.replace("login.html?complete=1");
+      return false;
+    }
+
     currentUser = session.user;
     currentAccessToken = session.access_token;
     return true;
@@ -300,10 +305,10 @@
       return `
         <article class="game-card state-${visualState}" data-game-id="${game.id}" style="--away-color:${game.away.color};--home-color:${game.home.color};--away-soft:${game.away.soft};--home-soft:${game.home.soft};--away-mark-opacity:${game.away.watermarkOpacity};--home-mark-opacity:${game.home.watermarkOpacity}">
           ${game.away.logo_url ? `<img class="team-watermark team-watermark--away" src="${game.away.logo_url}" alt="" aria-hidden="true">` : ""}
-          ${game.home.logo_url ? `<img class="team-watermark" team-watermark--home" src="${game.home.logo_url}" alt="" aria-hidden="true">` : ""}
+          ${game.home.logo_url ? `<img class="team-watermark team-watermark--home" src="${game.home.logo_url}" alt="" aria-hidden="true">` : ""}
           <div class="game-meta">
             <span class="game-time">${formatTime(game.start_at)}</span>
-            <span class="game-status ${state === "live" ? "is-live" : ""}">${state === "live" ? '<i class="live-dot" aria-hidden="true"></i>' : ''}d{statusLabel(game, locked)}</span>
+            <span class="game-status ${state === "live" ? "is-live" : ""}">${state === "live" ? '<i class="live-dot" aria-hidden="true"></i>' : ''}${statusLabel(game, locked)}</span>
           </div>
 
           <div class="matchup">
