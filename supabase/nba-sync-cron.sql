@@ -18,10 +18,11 @@ select cron.schedule(
   $$
 );
 
--- Calendário futuro: a cada 6 horas.
+-- Calendário futuro: diariamente às 09:10 UTC = 06:10 BRT.
+-- A função carrega uma janela de ontem até +10 dias.
 select cron.schedule(
   'nba-sync-full',
-  '17 */6 * * *',
+  '10 9 * * *',
   $$
     select net.http_post(
       url := 'https://wueaswmbujgitfxydphh.supabase.co/functions/v1/nba-sync',
