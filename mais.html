@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#E7A400" />
+  <title>Mais · Bolão NBA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/room.css" />
+  <link rel="stylesheet" href="assets/css/secondary-pages.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar internal-topbar">
+      <button class="back-button" type="button" data-back aria-label="Voltar">
+        <span class="back-button__icon" aria-hidden="true">←</span><span>Voltar</span>
+      </button>
+      <div class="internal-title">
+        <p class="eyebrow">BOLÃO NBA</p>
+        <h1 class="page-title">Mais</h1>
+      </div>
+      <div class="trophy" aria-hidden="true">•••</div>
+    </header>
+
+    <main class="page-content secondary-page">
+      <section class="account-card">
+        <div class="account-avatar" id="accountAvatar">J</div>
+        <div class="account-copy">
+          <span class="section-kicker">SEU ACESSO</span>
+          <h2 id="accountName">Jogador</h2>
+          <p id="accountEmail">Carregando…</p>
+          <small>✓ Sessão salva neste aparelho</small>
+        </div>
+      </section>
+
+      <section class="more-section">
+        <span class="section-kicker">BOLÃO</span>
+        <div class="menu-list">
+          <button class="menu-row" type="button" id="shareBolaoButton">
+            <span class="menu-icon">↗</span>
+            <span><strong>Convidar para o bolão</strong><small>Compartilhar link + código 1322</small></span>
+            <b>›</b>
+          </button>
+          <button class="menu-row" type="button" id="copyRoomCode">
+            <span class="menu-icon">#</span>
+            <span><strong>Código da sala</strong><small>1322</small></span>
+            <b>Copiar</b>
+          </button>
+          <a class="menu-row" href="ranking.html">
+            <span class="menu-icon">♕</span>
+            <span><strong>Ranking</strong><small>Classificação da temporada</small></span>
+            <b>›</b>
+          </a>
+          <a class="menu-row" href="estatisticas.html">
+            <span class="menu-icon">▥</span>
+            <span><strong>Estatísticas</strong><small>Seu desempenho no bolão</small></span>
+            <b>›</b>
+          </a>
+        </div>
+      </section>
+
+      <section class="more-section">
+        <span class="section-kicker">REGRAS</span>
+        <div class="info-stack">
+          <div><strong>1 ponto por vencedor</strong><p>Cada acerto vale um ponto.</p></div>
+          <div><strong>Rodada trava no primeiro jogo</strong><p>Quando o primeiro jogo começa, nenhum palpite daquele dia pode ser alterado.</p></div>
+          <div><strong>Palpites ficam escondidos</strong><p>Os palpites dos outros participantes só aparecem depois do fechamento da rodada.</p></div>
+        </div>
+      </section>
+
+      <section class="more-section account-actions">
+        <span class="section-kicker">CONTA</span>
+        <button class="secondary-button full-button" type="button" id="recoverInfo">Acessar em outro aparelho</button>
+        <button class="danger-button full-button" type="button" id="logoutButton">Sair deste aparelho</button>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegação principal">
+      <a class="nav-item" href="index.html"><span>⌂</span><small>Palpites</small></a>
+      <a class="nav-item" href="ranking.html"><span>♕</span><small>Ranking</small></a>
+      <a class="nav-item" href="estatisticas.html"><span>▥</span><small>Estatísticas</small></a>
+      <a class="nav-item active" href="mais.html"><span>•••</span><small>Mais</small></a>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="assets/js/navigation.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/share.js"></script>
+  <script src="assets/js/more.js"></script>
+</body>
+</html>
