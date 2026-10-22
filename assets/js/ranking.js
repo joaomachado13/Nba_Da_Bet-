@@ -1,17 +1,120 @@
 (async function () {
-  const host = document.querySelectoäà€XY\òõÿ\ôäN¬àYà
-]⁄[ô›ÀêT‘’TPêT—JH¬à‹›ö[õô\íSH	œ]à€\‹œHúò[öÀ\õ›»èè‹[èî›\Xò\ŸH∞Ë€»€€ôöY›\òYÀè‹‹[èèŸ]èâŒ¬àô]\õé¬àBÇà€€ú›»]Nà»\Ÿ\àK\úõ‹éà\Ÿ\ë\úõ‹àHH]ÿZ]⁄[ô›ÀêT‘’TPêT—Kò]]ôŸ]\Ÿ\ä
-N¬àYà
-\Ÿ\ë\úõ‹à]\Ÿ\äH¬àÿÿ][€ãúô\XŸJõŸ⁄[ãö[äN¬àô]\õé¬àBÇà€€ú›»]K\úõ‹àHH]ÿZ]⁄[ô›ÀêT‘’TPêT—Bàôúõ€Jú›[ô[ô‹»äBàúŸ[X›
-ù\Ÿ\ó⁄Y\‹^W€ò[YK]ò]\ó›\õò]õ‹ö]W›X[Wÿ€ŸK⁄[ùÀX⁄YY‹X⁄‹À›[‹X⁄‹»äBàõ‹ô\äú⁄[ù»ã»\ÿŸ[ô[ôŒàò[ŸHJBàõ‹ô\äô\‹^W€ò[YHã»\ÿŸ[ô[ôŒàùYHJN¬ÇàYà
-\úõ‹äH¬à‹›ö[õô\íSH]à€\‹œHúò[öÀ\õ›»èè‹[èì∞Ë€»õ⁄H‹‹Î]ô[ÿ\úôYÿ\à»ò[ö⁄[ôÀè‹‹[èèŸ]èò¬à€€ú€€Kô\úõ‹ä\úõ‹äN¬àô]\õé¬àBÇà€€ú›ò[ö⁄[ô»H]H◊N¬àYà
-\ò[ö⁄[ôÀõ[ô›
-H¬à‹›ö[õô\íSH	œ]à€\‹œHúò[öÀ\õ›»èè‹[èì»ò[ö⁄[ô»€€YpÈÿH\‹⁄[H]YH‹»ö[YZ\õ‹»[]\»õ‹ô[H€€\]Y‹Àè‹‹[èèŸ]èâŒ¬àô]\õé¬àBÇà‹›ö[õô\íSHò[ö⁄[ôÀõX\
+  const host = document.querySelector("#leaderboard");
+  const braveTitle = document.querySelector("#braveTitle");
+  const supabase = window.APP_SUPABASE;
 
-\ú€€ã[ô^
-HOà¬à€€ú›[ö]X[»H›ö[ô \ú€€ãô\‹^W€ò[YHíàäBàú‹]
-◊ À Kú€XŸJäKõX\
-\ùOà\ùÃHàäKöõ⁄[äàäKù’\\êÿ\ŸJ
-N¬àô]\õàà]à€\‹œHúò[öÀ\õ›»	⁄[ô^OOH»ôö\ú›àààüH	‹\ú€€ãù\Ÿ\ó⁄YOOH\Ÿ\ãöY»ö\À^[›HàààüHèÇà‹[à€\‹œHúò[öÀ\‹⁄][€àèâ⁄[ô^
-»_O‹‹[èÇà]à€\‹œHúò[öÀ\\ú€€àèÇà‹[à€\‹œHò]ò]\àèâ⁄[ö]X[ﬂO‹‹[èÇà‹[à€\‹œHúò[öÀ[ò[YHèâ‹\ú€€ãô\‹^W€ò[Y_I‹\ú€€ãù\Ÿ\ó⁄YOOH\Ÿ\ãöY»à0≠»õÿÍààààüO‹‹[èÇàŸ]èÇà‹[à€\‹œHúò[öÀ\⁄[ù»èâ‹\ú€€ãú⁄[ùﬂHœ‹‹[èÇàŸ]èò¬àJKöõ⁄[äàäN¬üJJ
-N¬
+  function initials(name) {
+    return String(name || "Jogador")
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map(part => part[0] || "")
+      .join("")
+      .toUpperCase();
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function renderError(message) {
+    if (!host) return;
+    host.innerHTML = `
+      <div class="rank-row">
+        <div class="rank-position">‚Äî</div>
+        <div class="rank-person">
+          <div class="avatar">!</div>
+          <div>
+            <div class="rank-name">Ranking indispon√≠vel</div>
+            <small>${escapeHtml(message)}</small>
+          </div>
+        </div>
+        <div class="rank-points">‚Äî</div>
+      </div>`;
+  }
+
+  if (!supabase) {
+    renderError("Supabase n√£o carregou.");
+    return;
+  }
+
+  const { data, error } = await supabase.auth.getSession();
+  const session = data?.session;
+
+  if (error || !session?.user || !session?.access_token) {
+    location.replace("login.html");
+    return;
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const base = window.APP_CONFIG?.SUPABASE_URL;
+    const key = window.APP_CONFIG?.SUPABASE_PUBLISHABLE_KEY;
+    const params = new URLSearchParams({
+      select: "user_id,display_name,points,decided_picks,total_picks",
+      order: "points.desc,display_name.asc"
+    });
+
+    const response = await fetch(`${base}/rest/v1/standings?${params}`, {
+      signal: controller.signal,
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${session.access_token}`,
+        Accept: "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Ranking respondeu ${response.status}`);
+    }
+
+    const rows = await response.json();
+    const currentUserId = session.user.id;
+
+    host.innerHTML = (rows || []).map((person, index) => {
+      const name = person.display_name || "Jogador";
+      const isYou = person.user_id === currentUserId;
+      return `
+        <div class="rank-row ${index === 0 ? "first" : ""} ${isYou ? "is-you" : ""}">
+          <div class="rank-position">${index === 0 ? "‚ôõ" : index + 1}</div>
+          <div class="rank-person">
+            <div class="avatar">${escapeHtml(initials(name))}</div>
+            <div>
+              <div class="rank-name">${escapeHtml(name)}${isYou ? " ¬∑ voc√™" : ""}</div>
+              <small>${Number(person.decided_picks || 0)} palpites decididos</small>
+            </div>
+          </div>
+          <div class="rank-points">${Number(person.points || 0)} pts</div>
+        </div>`;
+    }).join("") || `
+      <div class="rank-row">
+        <div class="rank-position">‚Äî</div>
+        <div class="rank-person">
+          <div class="avatar">üèÄ</div>
+          <div>
+            <div class="rank-name">O ranking come√ßa na primeira rodada</div>
+            <small>Os pontos aparecem quando os jogos forem finalizados.</small>
+          </div>
+        </div>
+        <div class="rank-points">0 pts</div>
+      </div>`;
+
+    if (braveTitle) {
+      braveTitle.textContent = rows?.length
+        ? "Os destaques da rodada aparecem aqui."
+        : "Ainda sem destaque nesta rodada.";
+    }
+  } catch (err) {
+    console.error("[Bol√£o] Falha ao carregar ranking:", err);
+    renderError(err?.name === "AbortError" ? "Tempo limite ao consultar os dados." : err?.message || "Erro inesperado.");
+  } finally {
+    clearTimeout(timeout);
+  }
+})();
