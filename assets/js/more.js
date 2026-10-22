@@ -51,7 +51,7 @@
   });
 
   document.getElementById("recoverInfo")?.addEventListener("click", () => {
-    showToast("Em outro aparelho, escolha “Já joguei” e use este mesmo e-mail.");
+    showToast("Em outro aparelho, entre com este mesmo e-mail e a senha da sala.");
   });
 
   document.getElementById("logoutButton")?.addEventListener("click", async () => {
