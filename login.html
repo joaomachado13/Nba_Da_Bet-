@@ -9,26 +9,39 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/room.css" />
 </head>
-<body class="auth-page">
-  <main class="auth-card">
-    <button class="back-button auth-back" type="button" data-back aria-label="Voltar para a página anterior">
-      <span class="back-button__icon" aria-hidden="true">←</span>
-      <span>Voltar</span>
-    </button>
+<body class="auth-page room-entry-page">
+  <main class="auth-card room-entry-card">
     <img class="nba-auth-logo" src="https://cdn.nba.com/logos/leagues/logo-nba-logoman.svg" alt="NBA">
     <p class="eyebrow">BOLÃO NBA · TEMPORADA 26/27</p>
-    <h1>Entrar</h1>
-    <p class="auth-copy">Entre com seu e-mail. Você receberá um link seguro para entrar no bolão.</p>
-    <form id="loginForm" class="auth-form">
-      <label for="email">E-mail</label>
-      <input id="email" type="email" required placeholder="voce@email.com" autocomplete="email" />
-      <button class="primary-button" type="submit">Enviar link de acesso</button>
+    <h1>Entrar no bolão</h1>
+    <p class="auth-copy">Escolha seu nome e digite o código da sala. Depois disso, este aparelho continua conectado automaticamente.</p>
+
+    <section class="existing-player" id="existingPlayer" hidden>
+      <span class="room-status">✓ JOGADOR SALVO NESTE APARELHO</span>
+      <strong id="existingPlayerName">Jogador</strong>
+      <button class="primary-button" type="button" id="continuePlayer">Continuar no bolão</button>
+      <button class="secondary-button" type="button" id="switchPlayer">Trocar jogador neste aparelho</button>
+    </section>
+
+    <form id="loginForm" class="auth-form room-form">
+      <label for="playerName">Seu nome</label>
+      <input id="playerName" type="text" required minlength="2" maxlength="24" placeholder="Ex.: João" autocomplete="nickname" autocapitalize="words" />
+
+      <label for="roomCode">Código da sala</label>
+      <input id="roomCode" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" required placeholder="1322" autocomplete="off" />
+
+      <button class="primary-button" type="submit">Entrar no bolão</button>
     </form>
-    <p class="auth-footnote">Você receberá um link de acesso no e-mail informado.</p>
+
+    <div class="room-note">
+      <span aria-hidden="true">●</span>
+      <p><strong>Sem e-mail e sem cadastro.</strong> Seu jogador fica salvo neste navegador.</p>
+    </div>
   </main>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="assets/js/navigation.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
   <script src="assets/js/config.js"></script>
   <script src="assets/js/supabase-client.js"></script>
