@@ -479,18 +479,20 @@
   }
 
   async function resolveGames() {
-    try {
-      const fromNba = await loadGamesFromNbaEndpoint();
-      if (fromNba) return fromNba;
-    } catch (error) {
-      console.warn("NBA endpoint indisponível:", error);
-    }
-
+    // O banco é a fonte principal porque predictions.game_id possui FK para public.games.
+    // A API NBA fica como fallback até o sincronizador Vercel -> Supabase estar ativo.
     try {
       const fromSupabase = await loadGamesFromSupabase();
       if (fromSupabase) return fromSupabase;
     } catch (error) {
       console.warn("Supabase indisponível:", error);
+    }
+
+    try {
+      const fromNba = await loadGamesFromNbaEndpoint();
+      if (fromNba) return fromNba;
+    } catch (error) {
+      console.warn("NBA endpoint indisponível:", error);
     }
 
     if (window.APP_DEMO_MODE) return loadFallbackGames();
