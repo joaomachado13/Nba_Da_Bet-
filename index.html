@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/room.css" />
 </head>
 <body>
   <div class="app-shell">
@@ -29,6 +30,11 @@
         <button class="desktop-nav__item desktop-action" data-message="Estatísticas entram na próxima etapa.">Estatísticas</button>
         <button class="desktop-nav__item desktop-action" data-message="Mais opções entram na próxima etapa.">Mais</button>
       </nav>
+
+      <button class="invite-button" id="shareBolaoButton" type="button" aria-label="Compartilhar Bolão NBA">
+        <span class="invite-button__icon" aria-hidden="true">↗</span>
+        <span class="invite-button__label">Convidar</span>
+      </button>
 
       <button class="profile-button" id="profileButton" aria-label="Abrir perfil">
         <span class="profile-copy"><small>Meu perfil</small><strong>João</strong></span>
@@ -150,5 +156,6 @@
   <script src="assets/js/rules.js"></script>
   <script src="assets/js/teams.js"></script>
   <script src="assets/js/app.js"></script>
+  <script src="assets/js/share.js"></script>
 </body>
 </html>
