@@ -41,13 +41,22 @@
   }
 
   async function requireUser() {
-    if (!window.APP_SUPABASE) throw new Error("Supabase não configurado");
-    const { data: { user }, error } = await window.APP_SUPABASE.auth.getUser();
-    if (error || !user) {
+    if (!window.APP_SUPABASE) {
+      location.replace("login.html?reason=supabase");
+      return false;
+    }
+
+    // Para o bolão em formato de sala, a sessão fica persistida no navegador.
+    // getSession() lê o estado local imediatamente; não precisamos validar
+    // remotamente o usuário antes de decidir se mostramos a tela de entrada.
+    const { data, error } = await window.APP_SUPABASE.auth.getSession();
+
+    if (error || !data?.session?.user) {
       location.replace("login.html");
       return false;
     }
-    currentUser = user;
+
+    currentUser = data.session.user;
     return true;
   }
 
@@ -557,5 +566,26 @@
     console.info(`[Bolão] Fonte dos jogos: ${sourceName}`);
   }
 
-  init();
+  init().catch(error => {
+    console.error("[Bolão] Falha na inicialização:", error);
+
+    // Nunca deixa a home presa em "Carregando..." sem explicação.
+    if (!currentUser) {
+      location.replace("login.html?reason=init");
+      return;
+    }
+
+    if (gamesList) {
+      gamesList.innerHTML = `
+        <div class="game-card empty-games">
+          <div>
+            <strong>Não foi possível carregar o bolão.</strong>
+            <span>Atualize a página. Se continuar, abra novamente pelo link do convite.</span>
+          </div>
+        </div>`;
+    }
+    if (gamesSummaryEl) gamesSummaryEl.textContent = "Falha ao carregar os dados da rodada";
+    if (countdownEl) countdownEl.textContent = "Não foi possível carregar o horário da rodada.";
+    showToast("Falha ao carregar o bolão.");
+  });
 })();
