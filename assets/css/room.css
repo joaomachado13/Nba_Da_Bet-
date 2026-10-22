@@ -1,0 +1,119 @@
+.room-entry-page {
+  background: var(--page);
+}
+.room-entry-card {
+  width: min(calc(100% - 28px), 430px);
+  padding: 28px;
+  border-color: var(--gold-border);
+  background: var(--surface-warm);
+}
+.room-entry-card h1 {
+  margin-bottom: 8px;
+}
+.room-form {
+  margin-top: 22px;
+}
+.room-form input {
+  min-height: 50px;
+  font-size: 16px;
+  background: #fff;
+}
+.room-form #roomCode {
+  letter-spacing: .18em;
+  font-weight: 800;
+}
+.room-note {
+  margin-top: 16px;
+  padding: 12px 13px;
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  border: 1px solid var(--gold-border);
+  border-radius: 11px;
+  background: var(--gold-ghost);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.room-note span {
+  color: var(--gold);
+  font-size: 9px;
+  margin-top: 3px;
+}
+.room-note p {
+  margin: 0;
+}
+.room-note strong {
+  color: var(--ink-2);
+}
+.existing-player {
+  margin-top: 22px;
+  display: grid;
+  gap: 10px;
+}
+.existing-player[hidden] {
+  display: none;
+}
+.existing-player > strong {
+  margin: 2px 0 5px;
+  font-size: 26px;
+  letter-spacing: -.035em;
+}
+.room-status {
+  width: fit-content;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: #E8F5ED;
+  color: #137A4C;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .07em;
+}
+.secondary-button {
+  min-height: 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink-2);
+  font-weight: 750;
+  cursor: pointer;
+}
+.invite-button {
+  min-height: 36px;
+  padding: 0 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--gold-border);
+  border-radius: 9px;
+  background: var(--gold-ghost);
+  color: #795500;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.invite-button:hover {
+  border-color: rgba(232,168,0,.55);
+  background: #FFF1C8;
+}
+.invite-button__icon {
+  font-size: 15px;
+  line-height: 1;
+}
+@media (max-width: 899px) {
+  .invite-button {
+    width: 38px;
+    height: 38px;
+    min-height: 38px;
+    padding: 0;
+    border-radius: 10px;
+  }
+  .invite-button__label {
+    display: none;
+  }
+  .room-entry-card {
+    padding: 24px 20px;
+  }
+}
