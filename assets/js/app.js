@@ -41,6 +41,42 @@
     showToast.timer = setTimeout(() => toast.classList.remove("show"), 2100);
   }
 
+  function roomPassword() {
+    return "BolaoNBA-1322!";
+  }
+
+  async function migrateRoomLogin() {
+    if (!currentUser?.email || currentUser.user_metadata?.room_login_v2) return;
+
+    try {
+      const metadata = {
+        ...(currentUser.user_metadata || {}),
+        room_login_v2: true
+      };
+
+      const { data, error } = await window.APP_SUPABASE.auth.updateUser({
+        password: roomPassword(),
+        data: metadata
+      });
+
+      if (error) throw error;
+
+      const signed = await window.APP_SUPABASE.auth.signInWithPassword({
+        email: currentUser.email,
+        password: roomPassword()
+      });
+
+      if (!signed.error && signed.data?.session) {
+        currentUser = signed.data.user;
+        currentAccessToken = signed.data.session.access_token;
+      } else if (data?.user) {
+        currentUser = data.user;
+      }
+    } catch (error) {
+      console.warn("[Bolão] Migração do login pendente:", error);
+    }
+  }
+
   async function requireUser() {
     if (!window.APP_SUPABASE) {
       location.replace("login.html?reason=supabase");
