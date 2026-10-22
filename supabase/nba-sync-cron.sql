@@ -1,32 +1,33 @@
 -- Automação NBA do Bolão NBA
--- Supabase Edge Function: nba-sync
--- Site: https://nbadabet.vercel.app/
+-- Edge Function: nba-sync
 
 create extension if not exists pg_net with schema extensions;
 create extension if not exists pg_cron;
 
--- Atualiza status/placares do dia a cada 10 minutos.
+-- Scoreboard/status/placares: a cada 5 minutos.
 select cron.schedule(
-  'nba-sync-live',
-  '*/10 * * * *',
+  'nba-sync-fast',
+  '*/5 * * * *',
   $$
     select net.http_post(
       url := 'https://wueaswmbujgitfxydphh.supabase.co/functions/v1/nba-sync',
       headers := '{"Content-Type":"application/json"}'::jsonb,
-      body := '{"mode":"live"}'::jsonb
+      body := '{"mode":"fast"}'::jsonb,
+      timeout_milliseconds := 15000
     );
   $$
 );
 
--- Recarrega a janela de calendário futuro a cada 6 horas.
+-- Calendário futuro: a cada 6 horas.
 select cron.schedule(
-  'nba-sync-calendar',
+  'nba-sync-full',
   '17 */6 * * *',
   $$
     select net.http_post(
       url := 'https://wueaswmbujgitfxydphh.supabase.co/functions/v1/nba-sync',
       headers := '{"Content-Type":"application/json"}'::jsonb,
-      body := '{"mode":"calendar"}'::jsonb
+      body := '{"mode":"full"}'::jsonb,
+      timeout_milliseconds := 30000
     );
   $$
 );
