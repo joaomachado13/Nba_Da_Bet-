@@ -29,7 +29,7 @@ A Edge Function `nba-sync` consulta as fontes oficiais da NBA e faz upsert em `p
 - se o scoreboard falhar, usa o calendário como fallback.
 
 ### Full sync
-- cron: a cada 6 horas;
+- cron: diariamente às 06:10 BRT, logo após a virada operacional;
 - fonte: calendário oficial NBA;
 - mantém uma janela de ontem até +10 dias;
 - adiciona jogos novos e corrige mudanças de horário, adiamentos e dados de arena/transmissão.
