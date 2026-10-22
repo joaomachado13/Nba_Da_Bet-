@@ -259,18 +259,13 @@
     const { data: { session } } = await supabase.auth.getSession();
     currentSession = session;
 
-    if (session?.user) {
-      const { data: verified, error: userError } = await supabase.auth.getUser();
-
-      if (userError || !verified?.user || verified.user.is_anonymous) {
-        await supabase.auth.signOut();
-        currentSession = null;
-        showJoinForm();
-      } else {
-        currentSession = { ...session, user: verified.user };
-        const name = await getDisplayName(verified.user);
-        showExistingPlayer(name, verified.user.email);
-      }
+    if (session?.user && !session.user.is_anonymous) {
+      currentSession = session;
+      const name = await getDisplayName(session.user);
+      showExistingPlayer(name, session.user.email);
+    } else if (session?.user?.is_anonymous) {
+      const name = await getDisplayName(session.user);
+      showJoinForm({ completingAnonymous: true, name });
     } else {
       showJoinForm();
     }
