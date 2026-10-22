@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#E7A400" />
+  <title>Estatísticas · Bolão NBA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/secondary-pages.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar internal-topbar">
+      <button class="back-button" type="button" data-back aria-label="Voltar">
+        <span class="back-button__icon" aria-hidden="true">←</span><span>Voltar</span>
+      </button>
+      <div class="internal-title">
+        <p class="eyebrow">TEMPORADA 2026–27</p>
+        <h1 class="page-title">Estatísticas</h1>
+      </div>
+      <div class="trophy" aria-hidden="true">▥</div>
+    </header>
+
+    <main class="page-content secondary-page">
+      <section class="secondary-hero">
+        <span class="section-kicker">SEU DESEMPENHO</span>
+        <h2>Temporada 26/27</h2>
+        <p>Os números são calculados a partir dos seus palpites e dos jogos já finalizados.</p>
+      </section>
+
+      <section class="stats-grid" aria-label="Resumo das estatísticas">
+        <article class="metric-card">
+          <span>Posição</span>
+          <strong id="statPosition">—</strong>
+          <small id="statPositionHint">Aguardando ranking</small>
+        </article>
+        <article class="metric-card">
+          <span>Pontos</span>
+          <strong id="statPoints">0</strong>
+          <small>1 ponto por acerto</small>
+        </article>
+        <article class="metric-card">
+          <span>Aproveitamento</span>
+          <strong id="statAccuracy">0%</strong>
+          <small id="statAccuracyHint">Sem jogos decididos</small>
+        </article>
+        <article class="metric-card">
+          <span>Acertos</span>
+          <strong id="statCorrect">0</strong>
+          <small id="statCorrectHint">0 palpites decididos</small>
+        </article>
+      </section>
+
+      <section class="detail-card">
+        <div class="detail-card__head">
+          <div>
+            <span class="section-kicker">PALPITES</span>
+            <h3>Resumo da temporada</h3>
+          </div>
+        </div>
+        <div class="detail-rows">
+          <div><span>Enviados</span><strong id="statSubmitted">0</strong></div>
+          <div><span>Já decididos</span><strong id="statDecided">0</strong></div>
+          <div><span>Aguardando resultado</span><strong id="statPending">0</strong></div>
+          <div><span>Erros</span><strong id="statWrong">0</strong></div>
+        </div>
+      </section>
+
+      <section class="empty-insight" id="statsInsight">
+        <span aria-hidden="true">🏀</span>
+        <div>
+          <strong>As estatísticas começam com seus palpites.</strong>
+          <p>Conforme os jogos forem terminando, seus acertos e aproveitamento aparecem aqui automaticamente.</p>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegação principal">
+      <a class="nav-item" href="index.html"><span>⌂</span><small>Palpites</small></a>
+      <a class="nav-item" href="ranking.html"><span>♕</span><small>Ranking</small></a>
+      <a class="nav-item active" href="estatisticas.html"><span>▥</span><small>Estatísticas</small></a>
+      <a class="nav-item" href="mais.html"><span>•••</span><small>Mais</small></a>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="assets/js/navigation.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/stats.js"></script>
+</body>
+</html>
