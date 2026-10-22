@@ -616,6 +616,31 @@
     updateRoundStatus();
     setInterval(updateRoundStatus, 1000);
 
+    let refreshing = false;
+    async function refreshRoundData() {
+      if (refreshing || document.hidden) return;
+      refreshing = true;
+      try {
+        const freshGames = await loadGamesFromSupabase();
+        if (freshGames) games = freshGames;
+        await loadPredictions();
+        lockAt = window.BolaoRules.computeLockAt(games);
+        renderGames();
+        await renderMiniRanking();
+        await renderNextRound();
+        updateRoundStatus();
+      } catch (error) {
+        console.warn("[Bolão] Atualização automática:", error);
+      } finally {
+        refreshing = false;
+      }
+    }
+
+    setInterval(refreshRoundData, 60000);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) refreshRoundData();
+    });
+
     document.querySelector("#profileButton")?.addEventListener("click", () => location.href = "mais.html");
     document.querySelector("#statsButton")?.addEventListener("click", () => location.href = "estatisticas.html");
     document.querySelector("#moreButton")?.addEventListener("click", () => location.href = "mais.html");
