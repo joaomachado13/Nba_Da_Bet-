@@ -15,50 +15,22 @@
   <main class="auth-card room-entry-card">
     <img class="nba-auth-logo" src="https://cdn.nba.com/logos/leagues/logo-nba-logoman.svg" alt="NBA">
     <p class="eyebrow">BOLÃO NBA · TEMPORADA 26/27</p>
-    <h1 id="entryTitle">Entrar no bolão</h1>
-    <p class="auth-copy" id="entryCopy">Seu acesso fica salvo neste aparelho. O e-mail serve para recuperar o mesmo jogador em outro navegador.</p>
-
-    <section class="existing-player" id="existingPlayer" hidden>
-      <span class="room-status">✓ ACESSO SALVO NESTE APARELHO</span>
-      <strong id="existingPlayerName">Jogador</strong>
-      <small id="existingPlayerEmail"></small>
-      <button class="primary-button" type="button" id="continuePlayer">Continuar no bolão</button>
-      <button class="secondary-button" type="button" id="switchPlayer">Trocar jogador neste aparelho</button>
-    </section>
+    <h1>Entrar no bolão</h1>
+    <p class="auth-copy">Use o mesmo e-mail cadastrado e o código da sala. Depois, este navegador permanece conectado.</p>
 
     <form id="loginForm" class="auth-form room-form">
-      <label for="playerName">Seu nome</label>
-      <input id="playerName" type="text" required minlength="2" maxlength="24" placeholder="Ex.: João" autocomplete="nickname" autocapitalize="words" />
-
       <label for="playerEmail">Seu e-mail</label>
       <input id="playerEmail" type="email" required maxlength="120" placeholder="voce@email.com" autocomplete="email" inputmode="email" />
 
-      <label for="roomCode">Código da sala</label>
-      <input id="roomCode" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" required placeholder="••••" autocomplete="off" />
+      <label for="roomCode">Senha da sala</label>
+      <input id="roomCode" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" required placeholder="••••" autocomplete="current-password" />
 
-      <button class="primary-button" type="submit">Entrar no bolão</button>
-      <button class="text-action" type="button" id="showRecovery">Já joguei · acessar em outro aparelho</button>
-    </form>
-
-    <form id="recoveryForm" class="auth-form room-form recovery-form" hidden>
-      <div class="recovery-head">
-        <strong>Recuperar meu jogador</strong>
-        <span>Enviaremos um acesso para o seu e-mail. Depois, este navegador também fica conectado.</span>
-      </div>
-
-      <label for="recoveryEmail">Seu e-mail</label>
-      <input id="recoveryEmail" type="email" required maxlength="120" placeholder="voce@email.com" autocomplete="email" inputmode="email" />
-
-      <label for="recoveryCode">Código da sala</label>
-      <input id="recoveryCode" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" required placeholder="••••" autocomplete="off" />
-
-      <button class="primary-button" type="submit">Enviar acesso por e-mail</button>
-      <button class="text-action" type="button" id="hideRecovery">← Voltar para entrada</button>
+      <button class="primary-button" type="submit">Entrar</button>
     </form>
 
     <div class="room-note">
       <span aria-hidden="true">●</span>
-      <p><strong>Sem senha para decorar.</strong> Nome + e-mail + código da sala na primeira entrada. Depois, a sessão permanece salva.</p>
+      <p><strong>Acesso fechado.</strong> Novos cadastros estão encerrados. Quem já participa entra com o e-mail cadastrado e a senha da sala.</p>
     </div>
   </main>
 
