@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#E7A400" />
+  <title>Entrar · Bolão NBA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body class="auth-page">
+  <main class="auth-card">
+    <button class="back-button auth-back" type="button" data-back aria-label="Voltar para a página anterior">
+      <span class="back-button__icon" aria-hidden="true">←</span>
+      <span>Voltar</span>
+    </button>
+    <img class="nba-auth-logo" src="https://cdn.nba.com/logos/leagues/logo-nba-logoman.svg" alt="NBA">
+    <p class="eyebrow">BOLÃO NBA · TEMPORADA 26/27</p>
+    <h1>Entrar</h1>
+    <p class="auth-copy">Entre com seu e-mail. Você receberá um link seguro para entrar no bolão.</p>
+    <form id="loginForm" class="auth-form">
+      <label for="email">E-mail</label>
+      <input id="email" type="email" required placeholder="voce@email.com" autocomplete="email" />
+      <button class="primary-button" type="submit">Enviar link de acesso</button>
+    </form>
+    <p class="auth-footnote">Você receberá um link de acesso no e-mail informado.</p>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="assets/js/navigation.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.min.js"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/auth.js"></script>
+</body>
+</html>

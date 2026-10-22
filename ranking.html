@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#E7A400" />
+  <title>Ranking · Bolão NBA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar internal-topbar">
+      <button class="back-button" type="button" data-back aria-label="Voltar para a página anterior">
+        <span class="back-button__icon" aria-hidden="true">←</span>
+        <span>Voltar</span>
+      </button>
+      <div class="internal-title">
+        <p class="eyebrow">TEMPORADA 2026–27</p>
+        <h1 class="page-title">Ranking</h1>
+      </div>
+      <div class="trophy" aria-hidden="true">🏆</div>
+    </header>
+
+    <main class="page-content">
+      <section class="leaderboard" id="leaderboard"></section>
+
+      <section class="highlight-card">
+        <div class="highlight-icon">♛</div>
+        <div>
+          <span class="section-kicker">CORAJOSO DA NOITE</span>
+          <h2 id="braveTitle">Carlos foi o único de Celtics 👀</h2>
+          <p>Quando todo mundo vai para um lado, sempre tem alguém disposto a contrariar o grupo.</p>
+        </div>
+      </section>
+
+      <section class="family-banner">
+        <span class="section-kicker">TEMPORADA 26/27</span>
+        <h2>Cada rodada conta.<br><em>Cada palpite também.</em></h2>
+        <div class="banner-ball" aria-hidden="true">🏀</div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegação principal">
+      <a class="nav-item" href="index.html"><span>⌂</span><small>Palpites</small></a>
+      <a class="nav-item active" href="ranking.html"><span>♕</span><small>Ranking</small></a>
+      <button class="nav-item"><span>▥</span><small>Estatísticas</small></button>
+      <button class="nav-item"><span>•••</span><small>Mais</small></button>
+    </nav>
+  </div>
+
+  <script src="assets/js/navigation.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.min.js"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/ranking.js"></script>
+</body>
+</html>

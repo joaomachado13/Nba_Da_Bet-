@@ -1,0 +1,559 @@
+(function () {
+  const TZ = window.APP_CONFIG?.TIME_ZONE || "America/Sao_Paulo";
+  const gamesList = document.querySelector("#gamesList");
+  const toast = document.querySelector("#toast");
+  const picksDoneEl = document.querySelector("#picksDone");
+  const picksTotalEl = document.querySelector("#picksTotal");
+  const picksPercentEl = document.querySelector("#picksPercent");
+  const progressFill = document.querySelector("#progressFill");
+  const lockTimeEl = document.querySelector("#lockTime");
+  const countdownEl = document.querySelector("#roundCountdown");
+  const ruleCard = document.querySelector("#ruleCard");
+  const ruleTitle = document.querySelector("#ruleTitle");
+  const ruleText = document.querySelector("#ruleText");
+  const gamesSummaryEl = document.querySelector("#gamesSummary");
+  const roundGamesCountEl = document.querySelector("#roundGamesCount");
+  const roundPicksStatusEl = document.querySelector("#roundPicksStatus");
+  const roundStateEl = document.querySelector(".round-state");
+  const miniRankingEl = document.querySelector("#miniRanking");
+  const yourRankSummaryEl = document.querySelector("#yourRankSummary");
+  const infoDialog = document.querySelector("#infoDialog");
+  const infoDialogTitle = document.querySelector("#infoDialogTitle");
+  const infoDialogBody = document.querySelector("#infoDialogBody");
+  const familyRevealEl = document.querySelector("#familyReveal");
+  const nextRoundTitleEl = document.querySelector("#nextRoundTitle");
+  const nextRoundGamesEl = document.querySelector("#nextRoundGames");
+  const nextRoundMatchEl = document.querySelector("#nextRoundMatch");
+
+  let games = [];
+  let lockAt = null;
+  let picks = {};
+  let currentUser = null;
+  let currentProfile = null;
+  let sourceName = "supabase";
+  let previousLockedState = null;
+
+  function showToast(message) {
+    toast.textContent = message;
+    toast.classList.add("show");
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => toast.classList.remove("show"), 2100);
+  }
+
+  async function requireUser() {
+    if (!window.APP_SUPABASE) throw new Error("Supabase não configurado");
+    const { data: { user }, error } = await window.APP_SUPABASE.auth.getUser();
+    if (error || !user) {
+      location.replace("login.html");
+      return false;
+    }
+    currentUser = user;
+    return true;
+  }
+
+  async function loadProfile() {
+    if (!currentUser) return;
+    const { data, error } = await window.APP_SUPABASE
+      .from("profiles")
+      .select("id,display_name,avatar_url,favorite_team_code")
+      .eq("id", currentUser.id)
+      .single();
+    if (error) throw error;
+    currentProfile = data;
+    const name = data?.display_name || currentUser.email?.split("@")[0] || "Jogador";
+    const initials = name.split(/\s+/).slice(0, 2).map(part => part[0] || "").join("").toUpperCase();
+    const nameEl = document.querySelector("#profileButton .profile-copy strong");
+    const avatarEl = document.querySelector("#profileButton .profile-avatar");
+    if (nameEl) nameEl.textContent = name;
+    if (avatarEl) avatarEl.textContent = initials || "J";
+  }
+
+  async function loadPredictions() {
+    if (!currentUser || !games.length) { picks = {}; return; }
+    const gameIds = games.map(game => game.id);
+    const { data, error } = await window.APP_SUPABASE
+      .from("predictions")
+      .select("game_id,picked_team_code")
+      .eq("user_id", currentUser.id)
+      .in("game_id", gameIds);
+    if (error) throw error;
+    picks = Object.fromEntries((data || []).map(row => [String(row.game_id), row.picked_team_code]));
+  }
+
+  async function persistPick(gameId, teamCode) {
+    if (!currentUser) throw new Error("Sessão inválida");
+    const { error } = await window.APP_SUPABASE
+      .from("predictions")
+      .upsert({ user_id: currentUser.id, game_id: gameId, picked_team_code: teamCode }, { onConflict: "user_id,game_id" });
+    if (error) throw error;
+  }
+
+  function formatTime(iso) {
+    return new Intl.DateTimeFormat("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: TZ
+    }).format(new Date(iso));
+  }
+
+  function todayKey() {
+    return window.BolaoRules.roundDateKey(new Date(), TZ, 6);
+  }
+
+  function formatRoundDate(key) {
+    const safeDate = new Date(`${key}T12:00:00Z`);
+    const formatted = new Intl.DateTimeFormat("pt-BR", {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      timeZone: TZ
+    }).format(safeDate).replaceAll(".", "").toLowerCase();
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  }
+
+  function isLocked() {
+    return window.BolaoRules.isRoundLocked(lockAt);
+  }
+
+  function cleanForm(form) {
+    if (!Array.isArray(form)) return [];
+    return form.slice(-5).map(item => String(item || "").toUpperCase()).filter(item => item === "V" || item === "D");
+  }
+
+  function normalizeGame(game) {
+    const homeCode = game.home?.code || "HOME";
+    const awayCode = game.away?.code || "AWAY";
+    const homeCfg = window.NBA_TEAMS?.get(homeCode) || {};
+    const awayCfg = window.NBA_TEAMS?.get(awayCode) || {};
+
+    return {
+      id: String(game.id),
+      round_date: game.round_date || todayKey(),
+      start_at: game.start_at,
+      status: String(game.status || "scheduled").toLowerCase(),
+      home: {
+        code: homeCode,
+        name: game.home?.name || homeCfg.name || homeCode || "Mandante",
+        color: homeCfg.color || game.home?.color || "#E8A800",
+        soft: homeCfg.soft || "rgba(232,168,0,.12)",
+        watermarkOpacity: homeCfg.watermarkOpacity ?? .07,
+        nba_id: game.home?.nba_id || game.home?.id || homeCfg.id || null,
+        logo_url: game.home?.logo_url || window.NBA_TEAMS?.logoUrl(homeCode, game.home?.nba_id || game.home?.id) || "",
+        score: game.home?.score ?? null,
+        record: game.home?.record || "0-0",
+        form: cleanForm(game.home?.form)
+      },
+      away: {
+        code: awayCode,
+        name: game.away?.name || awayCfg.name || awayCode || "Visitante",
+        color: awayCfg.color || game.away?.color || "#E8A800",
+        soft: awayCfg.soft || "rgba(232,168,0,.12)",
+        watermarkOpacity: awayCfg.watermarkOpacity ?? .07,
+        nba_id: game.away?.nba_id || game.away?.id || awayCfg.id || null,
+        logo_url: game.away?.logo_url || window.NBA_TEAMS?.logoUrl(awayCode, game.away?.nba_id || game.away?.id) || "",
+        score: game.away?.score ?? null,
+        record: game.away?.record || "0-0",
+        form: cleanForm(game.away?.form)
+      }
+    };
+  }
+
+  function gameState(game) {
+    const status = game.status;
+    if (["postponed", "postponed_final", "ppd"].includes(status)) return "postponed";
+    if (["final", "completed", "closed"].includes(status)) return "final";
+    if (["live", "in_progress", "in-progress", "halftime"].includes(status)) return "live";
+    return "scheduled";
+  }
+
+  function statusLabel(game, locked) {
+    const state = gameState(game);
+    if (state === "final") return "FINAL";
+    if (state === "live") return "AO VIVO";
+    if (state === "postponed") return "ADIADO";
+    return locked ? "AGUARDANDO" : "ABERTO";
+  }
+
+  function scoreValue(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function winnerCode(game) {
+    if (gameState(game) !== "final") return null;
+    const awayScore = scoreValue(game.away.score);
+    const homeScore = scoreValue(game.home.score);
+    if (awayScore === null || homeScore === null || awayScore === homeScore) return null;
+    return awayScore > homeScore ? game.away.code : game.home.code;
+  }
+
+  function formMarkup(team) {
+    const form = team.form.length ? team.form : [];
+    const recent = form.length
+      ? `<span class="team-form" aria-label="Sequência recente">${form.map(result => `<i class="form-dot ${result === "V" ? "win" : "loss"}">${result}</i>`).join("")}</span>`
+      : "";
+    return `<span class="team-stats"><b>${team.record || "0-0"}</b>${recent}</span>`;
+  }
+
+  function savedMessage(game, selected, locked) {
+    if (!selected) return `<span class="pick-hint">Escolha o vencedor</span>`;
+
+    const winner = winnerCode(game);
+    if (winner) {
+      const correct = winner === selected;
+      return `<span class="pick-result ${correct ? "correct" : "wrong"}"><span aria-hidden="true">${correct ? "✓" : "×"}</span>${correct ? "Palpite correto" : "Palpite incorreto"}</span>`;
+    }
+
+    if (gameState(game) === "postponed") {
+      return `<span class="pick-confirmed muted"><span aria-hidden="true">○</span>Jogo adiado</span>`;
+    }
+
+    return `<span class="pick-confirmed"><span aria-hidden="true">✓</span>${locked ? "Palpite confirmado" : "Palpite salvo"}</span>`;
+  }
+
+  function renderGames() {
+    if (!games.length) {
+      gamesList.innerHTML = `
+        <div class="game-card empty-games">
+          <div>
+            <strong>Nenhum jogo da NBA hoje.</strong>
+            <span>A próxima rodada aparecerá automaticamente.</span>
+          </div>
+        </div>`;
+      updateProgress();
+      return;
+    }
+
+    const locked = isLocked();
+    gamesList.innerHTML = games.map(game => {
+      const selected = picks[game.id];
+      const state = gameState(game);
+      const blocked = locked || state === "live" || state === "final" || state === "postponed";
+      const awayScore = scoreValue(game.away.score);
+      const homeScore = scoreValue(game.home.score);
+      const showScore = state === "live" || state === "final";
+      const visualState = state === "scheduled" && locked ? "locked" : state;
+
+      return `
+        <article class="game-card state-${visualState}" data-game-id="${game.id}" style="--away-color:${game.away.color};--home-color:${game.home.color};--away-soft:${game.away.soft};--home-soft:${game.home.soft};--away-mark-opacity:${game.away.watermarkOpacity};--home-mark-opacity:${game.home.watermarkOpacity}">
+          ${game.away.logo_url ? `<img class="team-watermark team-watermark--away" src="${game.away.logo_url}" alt="" aria-hidden="true">` : ""}
+          ${game.home.logo_url ? `<img class="team-watermark" team-watermark--home" src="${game.home.logo_url}" alt="" aria-hidden="true">` : ""}
+          <div class="game-meta">
+            <span class="game-time">${formatTime(game.start_at)}</span>
+            <span class="game-status ${state === "live" ? "is-live" : ""}">${state === "live" ? '<i class="live-dot" aria-hidden="true"></i>' : ''}d{statusLabel(game, locked)}</span>
+          </div>
+
+          <div class="matchup">
+            <div class="team">
+              <span class="team-mark" style="--team-color:${game.away.color}">
+                ${game.away.logo_url ? `<img class="team-logo" src="${game.away.logo_url}" alt="Logo ${game.away.name}">` : ""}
+                <span class="team-fallback">${game.away.code}</span>
+              </span>
+              <span class="team-copy">
+                <span class="team-name-row"><span class="team-name">${game.away.name}</span>${showScore && awayScore !== null ? `<strong class="team-score">${awayScore}</strong>` : ""}</span>
+                ${formMarkup(game.away)}
+              </span>
+            </div>
+
+            <span class="vs" aria-label="visitante em mandante">@</span>
+
+            <div class="team away">
+              <span class="team-copy">
+                <span class="team-name-row"><span class="team-name">${game.home.name}</span>${showScore && homeScore !== null ? `<strong class="team-score">${homeScore}</strong>` : ""}</span>
+                ${formMarkup(game.home)}
+              </span>
+              <span class="team-mark" style="--team-color:${game.home.color}">
+                ${game.home.logo_url ? `<img class="team-logo" src="${game.home.logo_url}" alt="Logo ${game.home.name}">` : ""}
+                <span class="team-fallback">${game.home.code}</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="pick-actions">
+            <button class="pick-button ${selected === game.away.code ? "selected" : ""}" data-pick="${game.away.code}" ${blocked ? "disabled" : ""} aria-pressed="${selected === game.away.code}">
+              <span>${game.away.name}</span>${selected === game.away.code ? '<b aria-hidden="true">✓</b>' : ''}
+            </button>
+            <span class="pick-actions__spacer" aria-hidden="true"></span>
+            <button class="pick-button ${selected === game.home.code ? "selected" : ""}" data-pick="${game.home.code}" ${blocked ? "disabled" : ""} aria-pressed="${selected === game.home.code}">
+              <span>${game.home.name}</span>${selected === game.home.code ? '<b aria-hidden="true">✓</b>' : ''}
+            </button>
+          </div>
+
+          <div class="pick-saved">${savedMessage(game, selected, locked)}</div>
+        </article>`;
+    }).join("");
+
+    gamesList.querySelectorAll(".team-logo").forEach(img => {
+      img.addEventListener("load", () => img.closest(".team-mark")?.classList.add("logo-loaded");
+      img.addEventListener("error", () => img.remove());
+      if (img.complete && img.naturalWidth > 0) img.closest(".team-mark")?.classList.add("logo-loaded");
+    });
+    gamesList.querySelectorAll(".team-watermark").forEach(img => {
+      img.addEventListener("error", () => img.remove());
+    });
+
+    gamesList.querySelectorAll(".pick-button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (isLocked()) return showToast("A rodada já está fechada.");
+        const card = btn.closest(".game-card");
+        const game = games.find(item => item.id === card.dataset.gameId);
+        if (!game || gameState(game) !== "scheduled") return showToast("Este jogo não aceita alterações agora.");
+        const previous = picks[card.dataset.gameId];
+        picks[card.dataset.gameId] = btn.dataset.pick;
+        renderGames();
+        btn.disabled = true;
+        persistPick(card.dataset.gameId, btn.dataset.pick)
+          .then(() => showToast(`✓ Palpite salvo em ${btn.dataset.pick}`))
+          .catch(error => {
+            if (previous) picks[card.dataset.gameId] = previous; else delete picks[card.dataset.gameId];
+            renderGames();
+            showToast("Não foi possível salvar o palpite.");
+            console.error(error);
+          });
+      });
+    });
+
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const { total, done, percent } = window.BolaoRules.progress(games, picks);
+    picksDoneEl.textContent = done;
+    picksTotalEl.textContent = total;
+    picksPercentEl.textContent = `${percent}%`;
+    progressFill.style.width = `${percent}%`;
+    if (roundGamesCountEl) roundGamesCountEl.textContent = total;
+    if (roundPicksStatusEl) roundPicksStatusEl.textContent = `${done}/${total}`;
+    gamesSummaryEl.textContent = total
+      ? `${total} ${total === 1 ? "jogo" : "jogos"} na rodada · trava no início do primeiro jogo`
+      : "Sem jogos programados para a data local";
+  }
+
+  async function renderMiniRanking() {
+    if (!miniRankingEl || !window.APP_SUPABASE) return;
+    const { data, error } = await window.APP_SUPABASE
+      .from("standings")
+      .select("user_id,display_name,points")
+      .order("points", { ascending: false })
+      .order("display_name", { ascending: true });
+    if (error) { console.error(error); return; }
+    const ranking = data || [];
+    const currentIndex = ranking.findIndex(person => person.user_id === currentUser?.id);
+    const current = ranking[currentIndex];
+    const leader = ranking[0];
+    const runnerUp = ranking[1];
+
+    if (current && yourRankSummaryEl) {
+      if (currentIndex === 0) {
+        const gap = runnerUp ? current.points - runnerUp.points : 0;
+        yourRankSummaryEl.textContent = gap > 0 ? `Você lidera por ${gap} ${gap === 1 ? "pt" : "pts"}.` : "Você está na liderança.";
+      } else {
+        const gap = (leader?.points || 0) - current.points;
+        yourRankSummaryEl.textContent = `${gap} ${gap === 1 ? "pt" : "pts"} atrás do líder.`;
+      }
+    } else if (yourRankSummaryEl) {
+      yourRankSummaryEl.textContent = "Seu ranking começa no primeiro palpite computado.";
+    }
+
+    miniRankingEl.innerHTML = ranking.slice(0, 3).map((person, index) => {
+      const initials = String(person.display_name || "J").split(/\s+/).slice(0,2).map(part => part[0] || "").join("").toUpperCase();
+      return `<div class="mini-rank-row ${person.user_id === currentUser?.id ? "is-you" : ""} ${index === 0 ? "is-leader" : ""}">
+        <span class="mini-rank-position">${index === 0 ? '<span class="leader-crown" aria-label="Líder">♛</span>' : index + 1}</span>
+        <span class="mini-avatar">${initials}</span>
+        <span class="mini-rank-name">${person.display_name}${person.user_id === currentUser?.id ? " · você" : ""}</span>
+        <strong>${person.points} pts</strong>
+      </div>`;
+    }).join("") || '<div class="mini-rank-row"><span>Sem pontuação ainda.</span></div>';
+  }
+
+  async function renderNextRound() {
+    if (!nextRoundTitleEl || !nextRoundGamesEl || !nextRoundMatchEl || !window.APP_SUPABASE) return;
+    const current = todayKey();
+    const d = new Date(`${current}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + 1);
+    const nextKey = d.toISOString().slice(0,10);
+    const { data, error } = await window.APP_SUPABASE
+      .from("games")
+      .select("start_at,away_team_code,home_team_code")
+      .eq("round_date", nextKey)
+      .neq("status", "cancelled")
+      .order("start_at", { ascending: true });
+    if (error) { console.error(error); nextRoundMatchEl.textContent = "Não foi possível carregar a próxima rodada."; return; }
+    const rows = data || [];
+    nextRoundTitleEl.textContent = "Amanhã";
+    nextRoundGamesEl.textContent = `${rows.length} ${rows.length === 1 ? "jogo" : "jogos"}`;
+    const first = rows[0];
+    if (first) {
+      nextRoundMatchEl.innerHTML = `<span class="next-round-time">${formatTime(first.start_at)}</span><span class="next-round-teams"><span>${first.away_team_code}</span><b>@</b><span>${first.home_team_code}</span></span>`;
+    } else {
+      nextRoundMatchEl.textContent = "Sem jogos programados.";
+    }
+  }
+
+  function updateRoundStatus() {
+    if (!lockAt) {
+      lockTimeEl.textContent = "--:--";
+      countdownEl.textContent = "Sem rodada para fechar hoje.";
+      return;
+    }
+
+    lockTimeEl.textContent = formatTime(lockAt.toISOString());
+    const ms = lockAt.getTime() - Date.now();
+    const locked = ms <= 0;
+
+    if (previousLockedState !== null && locked !== previousLockedState) renderGames();
+    previousLockedState = locked;
+
+    if (locked) {
+      countdownEl.textContent = "Rodada encerrada. Os palpites já estão travados.";
+      ruleCard.classList.add("locked");
+      if (roundStateEl) { roundStateEl.textContent = "FECHADA"; roundStateEl.classList.add("locked"); }
+      ruleTitle.textContent = "Rodada fechada · palpites revelados";
+      ruleText.textContent = "Agora todos podem comparar os palpites desta rodada.";
+      if (familyRevealEl) {
+        familyRevealEl.hidden = false;
+        familyRevealEl.innerHTML = `<span class="reveal-dot">✓</span><span>Palpites liberados</span>`;
+        requestAnimationFrame(() => familyRevealEl.classList.add("is-visible"));
+      }
+      return;
+    }
+
+    ruleCard.classList.remove("locked");
+    if (familyRevealEl) {
+      familyRevealEl.classList.remove("is-visible");
+      familyRevealEl.hidden = true;
+    }
+    if (roundStateEl) { roundStateEl.textContent = "ABERTA"; roundStateEl.classList.remove("locked"); }
+    ruleTitle.textContent = "Palpites escondidos até o 1º jogo";
+    ruleText.textContent = "Quando a rodada fechar, os palpites dos participantes serão revelados.";
+
+    const hours = Math.floor(ms / 3600000);
+    const minutes = Math.floor((ms % 3600000) / 60000);
+    const seconds = Math.max(0, Math.floor((ms % 60000) / 1000));
+    countdownEl.textContent = `Faltam ${hours}h ${String(minutes).padStart(2, "0")}min ${String(seconds).padStart(2, "0")}s para enviar ou alterar`;
+  }
+
+  async function loadGamesFromNbaEndpoint() {
+    let endpoint = window.APP_CONFIG?.NBA_GAMES_ENDPOINT || "";
+    if (!endpoint && location.protocol !== "file:") endpoint = "/api/nba/games";
+    if (!endpoint) return null;
+
+    const url = new URL(endpoint, location.href);
+    url.searchParams.set("date", todayKey());
+    const response = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!response.ok) throw new Error(`NBA endpoint respondeu ${response.status}`);
+    const payload = await response.json();
+    if (!Array.isArray(payload.games)) throw new Error("Resposta inválida do endpoint NBA");
+    sourceName = "nba";
+    return payload.games.map(normalizeGame);
+  }
+
+  async function loadGamesFromSupabase() {
+    if (!window.APP_SUPABASE) return null;
+    const key = todayKey();
+
+    const { data, error } = await window.APP_SUPABASE
+      .from("games")
+      .select("id,round_date,start_at,status,home_team_code,home_team_name,home_record,home_form,home_score,away_team_code,away_team_name,away_record,away_form,away_score")
+      .eq("round_date", key)
+      .order("start_at", { ascending: true });
+
+    if (error) throw error;
+    sourceName = "supabase";
+    return (data || []).map(row => normalizeGame({
+      id: row.id,
+      round_date: row.round_date,
+      start_at: row.start_at,
+      status: row.status,
+      home: { code: row.home_team_code, name: row.home_team_name, record: row.home_record, form: row.home_form, score: row.home_score },
+      away: { code: row.away_team_code, name: row.away_team_name, record: row.away_record, form: row.away_form, score: row.away_score }
+    }));
+  }
+
+  function loadFallbackGames() {
+    sourceName = "fallback";
+    const key = todayKey();
+    return (window.MOCK_GAMES || [])
+      .filter(game => (game.round_date || window.BolaoRules.localDateKey(game.start_at, TZ)) === key)
+      .map(normalizeGame);
+  }
+
+  async function resolveGames() {
+    try {
+      const fromNba = await loadGamesFromNbaEndpoint();
+      if (fromNba) return fromNba;
+    } catch (error) {
+      console.warn("NBA endpoint indisponível:", error);
+    }
+
+    try {
+      const fromSupabase = await loadGamesFromSupabase();
+      if (fromSupabase) return fromSupabase;
+    } catch (error) {
+      console.warn("Supabase indisponível:", error);
+    }
+
+    if (window.APP_DEMO_MODE) return loadFallbackGames();
+    sourceName = "supabase-error";
+    return [];
+  }
+
+  const dialogContent = {
+    how: {
+      title: "Como funciona",
+      html: `<ol class="dialog-list"><li>Faça todos os seus palpites antes do primeiro jogo da rodada.</li><li>Quando o primeiro jogo começa, a rodada inteira é travada.</li><li>Depois do fechamento, os palpites podem ser comparados.</li></ol>`
+    },
+    score: {
+      title: "Pontuação",
+      html: `<p>Na regra inicial do bolão, cada vencedor acertado vale <strong>1 ponto</strong>. O ranking da temporada soma todos os acertos.</p>`
+    },
+    rules: {
+      title: "Regras da rodada",
+      html: `<ul class="dialog-list"><li>Um palpite por jogo.</li><li>Você pode trocar enquanto a rodada estiver aberta.</li><li>O fechamento acontece no horário do primeiro jogo do dia.</li><li>Depois do fechamento, nenhuma escolha pode ser alterada.</li></ul>`
+    }
+  };
+
+  function setupInfoDialog() {
+    if (!infoDialog) return;
+    document.querySelectorAll("[data-info-dialog]").forEach(button => {
+      button.addEventListener("click", () => {
+        const content = dialogContent[button.dataset.infoDialog] || dialogContent.how;
+        infoDialogTitle.textContent = content.title;
+        infoDialogBody.innerHTML = content.html;
+        infoDialog.showModal();
+      });
+    });
+    infoDialog.querySelector(".dialog-close")?.addEventListener("click", () => infoDialog.close());
+    infoDialog.addEventListener("click", event => {
+      if (event.target === infoDialog) infoDialog.close();
+    });
+  }
+
+  async function init() {
+    const authenticated = await requireUser();
+    if (!authenticated) return;
+    await loadProfile();
+    document.querySelector("#todayLabel").textContent = formatRoundDate(todayKey());
+    games = await resolveGames();
+    await loadPredictions();
+    lockAt = window.BolaoRules.computeLockAt(games);
+    renderGames();
+    await renderMiniRanking();
+    await renderNextRound();
+    updateRoundStatus();
+    setInterval(updateRoundStatus, 1000);
+
+    document.querySelector("#profileButton").addEventListener("click", () => location.href = "login.html");
+    document.querySelector("#statsButton").addEventListener("click", () => showToast("Estatísticas entram na próxima etapa."));
+    document.querySelector("#moreButton").addEventListener("click", () => showToast("Mais opções entram na próxima etapa."));
+    document.querySelectorAll(".desktop-action").forEach(button => {
+      button.addEventListener("click", () => showToast(button.dataset.message));
+    });
+    setupInfoDialog();
+
+    // Mantido apenas para diagnóstico no console; não aparece na interface.
+    console.info(`[Bolão] Fonte dos jogos: ${sourceName}`);
+  }
+
+  init();
+})();
