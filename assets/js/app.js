@@ -347,7 +347,7 @@
     }).join("");
 
     gamesList.querySelectorAll(".team-logo").forEach(img => {
-      img.addEventListener("load", () => img.closest(".team-mark")?.classList.add("logo-loaded");
+      img.addEventListener("load", () => img.closest(".team-mark")?.classList.add("logo-loaded"));
       img.addEventListener("error", () => img.remove());
       if (img.complete && img.naturalWidth > 0) img.closest(".team-mark")?.classList.add("logo-loaded");
     });
