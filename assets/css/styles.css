@@ -1430,3 +1430,77 @@ html, body { background: var(--page); }
     font-size: 10px;
   }
 }
+
+
+/* Palpites revelados após o fechamento da rodada */
+.revealed-picks {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.revealed-picks__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 9px;
+}
+.revealed-picks__head strong {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.revealed-picks__head span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+.revealed-picks__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.revealed-pick {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  border: 1px solid var(--gold-border);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 10px;
+}
+.revealed-pick.is-you {
+  background: var(--gold-ghost);
+  border-color: var(--gold);
+}
+.revealed-pick__name {
+  color: var(--ink);
+  font-weight: 700;
+}
+.revealed-pick__team {
+  color: #805800;
+  font-size: 10px;
+  letter-spacing: .04em;
+}
+.revealed-picks__empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+@media (max-width: 440px) {
+  .revealed-picks__list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .revealed-pick {
+    min-width: 0;
+    justify-content: space-between;
+  }
+  .revealed-pick__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
