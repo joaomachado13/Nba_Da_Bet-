@@ -29,6 +29,7 @@
   let lockAt = null;
   let picks = {};
   let currentUser = null;
+  let currentAccessToken = "";
   let currentProfile = null;
   let sourceName = "supabase";
   let previousLockedState = null;
@@ -46,55 +47,108 @@
       return false;
     }
 
-    // Para o bolão em formato de sala, a sessão fica persistida no navegador.
-    // getSession() lê o estado local imediatamente; não precisamos validar
-    // remotamente o usuário antes de decidir se mostramos a tela de entrada.
     const { data, error } = await window.APP_SUPABASE.auth.getSession();
+    const session = data?.session;
 
-    if (error || !data?.session?.user) {
+    if (error || !session?.user || !session?.access_token) {
       location.replace("login.html");
       return false;
     }
 
-    currentUser = data.session.user;
+    currentUser = session.user;
+    currentAccessToken = session.access_token;
     return true;
+  }
+
+  async function restRequest(path, options = {}) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    try {
+      const base = window.APP_CONFIG?.SUPABASE_URL;
+      const key = window.APP_CONFIG?.SUPABASE_PUBLISHABLE_KEY;
+      const response = await fetch(`${base}/rest/v1/${path}`, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${currentAccessToken}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          ...(options.headers || {})
+        }
+      });
+
+      const body = await response.text();
+      const data = body ? JSON.parse(body) : null;
+
+      if (!response.ok) {
+        const message = data?.message || data?.hint || `REST ${response.status}`;
+        throw new Error(message);
+      }
+      return data;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   async function loadProfile() {
     if (!currentUser) return;
-    const { data, error } = await window.APP_SUPABASE
-      .from("profiles")
-      .select("id,display_name,avatar_url,favorite_team_code")
-      .eq("id", currentUser.id)
-      .single();
-    if (error) throw error;
-    currentProfile = data;
-    const name = data?.display_name || currentUser.email?.split("@")[0] || "Jogador";
-    const initials = name.split(/\s+/).slice(0, 2).map(part => part[0] || "").join("").toUpperCase();
+
+    // O nome da sala já vem no metadata; isso deixa o topo instantâneo.
+    const fallbackName = currentUser.user_metadata?.display_name || "Jogador";
+    const fallbackInitials = fallbackName.split(/\s+/).slice(0, 2).map(part => part[0] || "").join("").toUpperCase();
     const nameEl = document.querySelector("#profileButton .profile-copy strong");
     const avatarEl = document.querySelector("#profileButton .profile-avatar");
+    if (nameEl) nameEl.textContent = fallbackName;
+    if (avatarEl) avatarEl.textContent = fallbackInitials || "J";
+
+    const params = new URLSearchParams({
+      select: "id,display_name,avatar_url,favorite_team_code",
+      id: `eq.${currentUser.id}`,
+      limit: "1"
+    });
+    const rows = await restRequest(`profiles?${params}`);
+    const data = rows?.[0] || {
+      id: currentUser.id,
+      display_name: fallbackName,
+      avatar_url: null,
+      favorite_team_code: null
+    };
+
+    currentProfile = data;
+    const name = data.display_name || fallbackName;
+    const initials = name.split(/\s+/).slice(0, 2).map(part => part[0] || "").join("").toUpperCase();
     if (nameEl) nameEl.textContent = name;
     if (avatarEl) avatarEl.textContent = initials || "J";
   }
 
   async function loadPredictions() {
     if (!currentUser || !games.length) { picks = {}; return; }
-    const gameIds = games.map(game => game.id);
-    const { data, error } = await window.APP_SUPABASE
-      .from("predictions")
-      .select("game_id,picked_team_code")
-      .eq("user_id", currentUser.id)
-      .in("game_id", gameIds);
-    if (error) throw error;
-    picks = Object.fromEntries((data || []).map(row => [String(row.game_id), row.picked_team_code]));
+    const gameIds = games.map(game => String(game.id));
+    const params = new URLSearchParams({
+      select: "game_id,picked_team_code",
+      user_id: `eq.${currentUser.id}`,
+      game_id: `in.(${gameIds.join(",")})`
+    });
+    const rows = await restRequest(`predictions?${params}`);
+    picks = Object.fromEntries((rows || []).map(row => [String(row.game_id), row.picked_team_code]));
   }
 
   async function persistPick(gameId, teamCode) {
     if (!currentUser) throw new Error("Sessão inválida");
-    const { error } = await window.APP_SUPABASE
-      .from("predictions")
-      .upsert({ user_id: currentUser.id, game_id: gameId, picked_team_code: teamCode }, { onConflict: "user_id,game_id" });
-    if (error) throw error;
+    const params = new URLSearchParams({ on_conflict: "user_id,game_id" });
+    await restRequest(`predictions?${params}`, {
+      method: "POST",
+      headers: {
+        Prefer: "resolution=merge-duplicates,return=minimal"
+      },
+      body: JSON.stringify({
+        user_id: currentUser.id,
+        game_id: gameId,
+        picked_team_code: teamCode
+      })
+    });
   }
 
   function formatTime(iso) {
@@ -339,14 +393,13 @@
   }
 
   async function renderMiniRanking() {
-    if (!miniRankingEl || !window.APP_SUPABASE) return;
-    const { data, error } = await window.APP_SUPABASE
-      .from("standings")
-      .select("user_id,display_name,points")
-      .order("points", { ascending: false })
-      .order("display_name", { ascending: true });
-    if (error) { console.error(error); return; }
-    const ranking = data || [];
+    if (!miniRankingEl) return;
+
+    const params = new URLSearchParams({
+      select: "user_id,display_name,points",
+      order: "points.desc,display_name.asc"
+    });
+    const ranking = await restRequest(`standings?${params}`) || [];
     const currentIndex = ranking.findIndex(person => person.user_id === currentUser?.id);
     const current = ranking[currentIndex];
     const leader = ranking[0];
@@ -366,34 +419,35 @@
 
     miniRankingEl.innerHTML = ranking.slice(0, 3).map((person, index) => {
       const initials = String(person.display_name || "J").split(/\s+/).slice(0,2).map(part => part[0] || "").join("").toUpperCase();
-      return `<div class="mini-rank-row ${person.user_id === currentUser?.id ? "is-you" : ""} ${index === 0 ? "is-leader" : ""}">
-        <span class="mini-rank-position">${index === 0 ? '<span class="leader-crown" aria-label="Líder">♛</span>' : index + 1}</span>
+      return `<p class="mini-rank-row ${person.user_id === currentUser?.id ? "is-you" : ""} ${index === 0 ? "is-leader" : ""}">
+        <span class="mini-rank-position">${index === 0 ? '<span class="leader-crown">♛</span>' : index + 1}</span>
         <span class="mini-avatar">${initials}</span>
         <span class="mini-rank-name">${person.display_name}${person.user_id === currentUser?.id ? " · você" : ""}</span>
         <strong>${person.points} pts</strong>
-      </div>`;
-    }).join("") || '<div class="mini-rank-row"><span>Sem pontuação ainda.</span></div>';
+      </p>`;
+    }).join("") || '<p class="mini-rank-row">Sem pontuação ainda.</p>';
   }
 
   async function renderNextRound() {
-    if (!nextRoundTitleEl || !nextRoundGamesEl || !nextRoundMatchEl || !window.APP_SUPABASE) return;
+    if (!nextRoundTitleEl || !nextRoundGamesEl || !nextRoundMatchEl) return;
     const current = todayKey();
     const d = new Date(`${current}T12:00:00Z`);
     d.setUTCDate(d.getUTCDate() + 1);
     const nextKey = d.toISOString().slice(0,10);
-    const { data, error } = await window.APP_SUPABASE
-      .from("games")
-      .select("start_at,away_team_code,home_team_code")
-      .eq("round_date", nextKey)
-      .neq("status", "cancelled")
-      .order("start_at", { ascending: true });
-    if (error) { console.error(error); nextRoundMatchEl.textContent = "Não foi possível carregar a próxima rodada."; return; }
-    const rows = data || [];
+
+    const params = new URLSearchParams({
+      select: "start_at,away_team_code,home_team_code",
+      round_date: `eq.${nextKey}`,
+      status: "neq.cancelled",
+      order: "start_at.asc"
+    });
+    const rows = await restRequest(`games?${params}`) || [];
+
     nextRoundTitleEl.textContent = "Amanhã";
     nextRoundGamesEl.textContent = `${rows.length} ${rows.length === 1 ? "jogo" : "jogos"}`;
     const first = rows[0];
     if (first) {
-      nextRoundMatchEl.innerHTML = `<span class="next-round-time">${formatTime(first.start_at)}</span><span class="next-round-teams"><span>${first.away_team_code}</span><b>@</b><span>${first.home_team_code}</span></span>`;
+      nextRoundMatchEl.innerHTML = `<span class="next-round-time">${formatTime(first.start_at)}</span><span class="next-round-teams"><b>${first.away_team_code}</b><span>@</span><b>${first.home_team_code}</b></span>`;
     } else {
       nextRoundMatchEl.textContent = "Sem jogos programados.";
     }
@@ -458,17 +512,17 @@
   }
 
   async function loadGamesFromSupabase() {
-    if (!window.APP_SUPABASE) return null;
+    if (!currentAccessToken) return null;
     const key = todayKey();
 
-    const { data, error } = await window.APP_SUPABASE
-      .from("games")
-      .select("id,round_date,start_at,status,home_team_code,home_team_name,home_record,home_form,home_score,away_team_code,away_team_name,away_record,away_form,away_score")
-      .eq("round_date", key)
-      .order("start_at", { ascending: true });
+    const params = new URLSearchParams({
+      select: "id,round_date,start_at,status,home_team_code,home_team_name,home_record,home_form,home_score,away_team_code,away_team_name,away_record,away_form,away_score",
+      round_date: `eq.${key}`,
+      order: "start_at.asc"
+    });
 
-    if (error) throw error;
-    sourceName = "supabase";
+    const data = await restRequest(`games?${params}`);
+    sourceName = "supabase-rest";
     return (data || []).map(row => normalizeGame({
       id: row.id,
       round_date: row.round_date,
