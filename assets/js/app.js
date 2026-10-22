@@ -28,6 +28,7 @@
   let games = [];
   let lockAt = null;
   let picks = {};
+  let revealedPicks = {};
   let currentUser = null;
   let currentAccessToken = "";
   let currentProfile = null;
@@ -165,15 +166,69 @@
   }
 
   async function loadPredictions() {
-    if (!currentUser || !games.length) { picks = {}; return; }
+    if (!currentUser || !games.length) {
+      picks = {};
+      revealedPicks = {};
+      return;
+    }
+
     const gameIds = games.map(game => String(game.id));
-    const params = new URLSearchParams({
-      select: "game_id,picked_team_code",
-      user_id: `eq.${currentUser.id}`,
-      game_id: `in.(${gameIds.join(",")})`
+    const roundLockAt = window.BolaoRules.computeLockAt(games);
+    const locked = window.BolaoRules.isRoundLocked(roundLockAt);
+
+    if (!locked) {
+      const params = new URLSearchParams({
+        select: "game_id,picked_team_code",
+        user_id: `eq.${currentUser.id}`,
+        game_id: `in.(${gameIds.join(",")})`
+      });
+      const rows = await restRequest(`predictions?${params}`);
+      picks = Object.fromEntries((rows || []).map(row => [String(row.game_id), row.picked_team_code]));
+      revealedPicks = {};
+      return;
+    }
+
+    // Depois do fechamento a RLS libera os palpites da rodada para comparação.
+    const predictionParams = new URLSearchParams({
+      select: "user_id,game_id,picked_team_code",
+      game_id: `in.(${gameIds.join(",")})`,
+      order: "created_at.asc"
     });
-    const rows = await restRequest(`predictions?${params}`);
-    picks = Object.fromEntries((rows || []).map(row => [String(row.game_id), row.picked_team_code]));
+    const rows = await restRequest(`predictions?${predictionParams}`) || [];
+
+    picks = Object.fromEntries(
+      rows
+        .filter(row => row.user_id === currentUser.id)
+        .map(row => [String(row.game_id), row.picked_team_code])
+    );
+
+    const userIds = [...new Set(rows.map(row => row.user_id).filter(Boolean))];
+    let names = {};
+
+    if (userIds.length) {
+      const profileParams = new URLSearchParams({
+        select: "id,display_name",
+        id: `in.(${userIds.join(",")})`,
+        order: "display_name.asc"
+      });
+      const profiles = await restRequest(`profiles?${profileParams}`) || [];
+      names = Object.fromEntries(profiles.map(profile => [profile.id, profile.display_name || "Jogador"]));
+    }
+
+    revealedPicks = {};
+    rows.forEach(row => {
+      const gameId = String(row.game_id);
+      if (!revealedPicks[gameId]) revealedPicks[gameId] = [];
+      revealedPicks[gameId].push({
+        user_id: row.user_id,
+        display_name: names[row.user_id] || "Jogador",
+        picked_team_code: row.picked_team_code
+      });
+    });
+
+    Object.values(revealedPicks).forEach(list => {
+      list.sort((a, b) => String(a.display_name).localeCompare(String(b.display_name), "pt-BR"));
+    });
   }
 
   async function persistPick(gameId, teamCode) {
@@ -315,6 +370,49 @@
     return `<span class="pick-confirmed"><span aria-hidden="true">✓</span>${locked ? "Palpite confirmado" : "Palpite salvo"}</span>`;
   }
 
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function revealMarkup(game, locked) {
+    if (!locked) return "";
+
+    const list = revealedPicks[game.id] || [];
+    if (!list.length) {
+      return `
+        <div class="revealed-picks">
+          <div class="revealed-picks__head">
+            <strong>Palpites da galera</strong>
+            <span>0 palpites</span>
+          </div>
+          <p class="revealed-picks__empty">Ninguém palpitou neste jogo.</p>
+        </div>`;
+    }
+
+    const chips = list.map(item => {
+      const isYou = item.user_id === currentUser?.id;
+      return `
+        <span class="revealed-pick ${isYou ? "is-you" : ""}">
+          <span class="revealed-pick__name">${escapeHtml(item.display_name)}${isYou ? " · você" : ""}</span>
+          <strong class="revealed-pick__team">${escapeHtml(item.picked_team_code)}</strong>
+        </span>`;
+    }).join("");
+
+    return `
+      <div class="revealed-picks">
+        <div class="revealed-picks__head">
+          <strong>Palpites da galera</strong>
+          <span>${list.length} ${list.length === 1 ? "palpite" : "palpites"}</span>
+        </div>
+        <div class="revealed-picks__list">${chips}</div>
+      </div>`;
+  }
+
   function renderGames() {
     if (!games.length) {
       gamesList.innerHTML = `
@@ -384,6 +482,7 @@
           </div>
 
           <div class="pick-saved">${savedMessage(game, selected, locked)}</div>
+          ${revealMarkup(game, locked)}
         </article>`;
     }).join("");
 
