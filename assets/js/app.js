@@ -55,15 +55,12 @@
       return false;
     }
 
-    const { data: verified, error: userError } = await window.APP_SUPABASE.auth.getUser();
-
-    if (userError || !verified?.user || verified.user.is_anonymous) {
-      await window.APP_SUPABASE.auth.signOut();
-      location.replace("login.html");
+    if (session.user.is_anonymous) {
+      location.replace("login.html?complete=1");
       return false;
     }
 
-    currentUser = verified.user;
+    currentUser = session.user;
     currentAccessToken = session.access_token;
     return true;
   }
