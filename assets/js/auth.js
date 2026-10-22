@@ -1,2 +1,141 @@
 (function () {
-  const form = document.querySelectoäà€Ÿ⁄[ëõ‹õHäN¬à€€ú›ÿ\›Hÿ›[Y[ùú]Y\ûTŸ[X›‚Ç"7Fˆ7B"ì∞¢6ˆÁ7B7V&÷óD'WGFˆ‚“f˜&”ÚÁVW'ï6V∆V7F¯†ùâ’——Ωπm—Â¡îÙâÕ’âµ•–âtú§Ï((ÄÅô’πç—•Ω∏ÅÕ°Ω›QΩÖÕ–°µïÕÕÖùî§ÅÏ(ÄÄÄÅ—ΩÖÕ–π—ï·—Ωπ—ïπ–ÄÙÅµïÕÕÖùîÏ(ÄÄÄÅ—ΩÖÕ–πç±ÖÕÕ1•Õ–πÖëê†âÕ°Ω‹à§Ï(ÄÄÄÅç±ïÖ…Q•µïΩ’–°Õ°Ω›QΩÖÕ–π—•µï»§Ï(ÄÄÄÅÕ°Ω›QΩÖÕ–π—•µï»ÄÙÅÕï—Q•µïΩ’–††§ÄÙ¯Å—ΩÖÕ–πç±ÖÕÕ1•Õ–π…ïµΩŸî†âÕ°Ω‹à§∞Ä»ÿ¿¿§Ï(ÄÅÙ((ÄÅÖÕÂπåÅô’πç—•Ω∏Å•π•–†§ÅÏ(ÄÄÄÅ•òÄ†Ö›•πëΩ‹πAA}MUA	M§ÅÏ(ÄÄÄÄÄÅÕ°Ω›QΩÖÕ–†âM’¡ÖâÖÕîÅªçºÅçΩπô•ù’…Öëº∏à§Ï(ÄÄÄÄÄÅ…ï—’…∏Ï(ÄÄÄÅÙ((ÄÄÄÅçΩπÕ–ÅÏÅëÖ—ÑËÅÏÅ’Õï»ÅÙÅÙÄÙÅÖ›Ö•–Å›•πëΩ‹πAA}MUA	MπÖ’—†πùï—UÕï»†§Ï(ÄÄÄÅ•òÄ°’Õï»§ÅÏ(ÄÄÄÄÄÅ±ΩçÖ—•Ω∏π…ï¡±Öçî†â•πëï‡π°—µ∞à§Ï(ÄÄÄÄÄÅ…ï—’…∏Ï(ÄÄÄÅÙ((ÄÄÄÅôΩ…¥¸πÖëëŸïπ—1•Õ—ïπï»†âÕ’âµ•–à∞ÅÖÕÂπåÅïŸïπ–ÄÙ¯ÅÏ(ÄÄÄÄÄÅïŸïπ–π¡…ïŸïπ—ïôÖ’±–†§Ï(ÄÄÄÄÄÅçΩπÕ–ÅïµÖ•∞ÄÙÅëΩç’µïπ–π≈’ï…ÂMï±ïç—Ω»†àçïµÖ•∞à§πŸÖ±’îπ—…•¥†§Ï(ÄÄÄÄÄÅÕ’âµ•—	’——Ω∏πë•ÕÖâ±ïêÄÙÅ—…’îÏ(ÄÄÄÄÄÅÕ’âµ•—	’——Ω∏π—ï·—Ωπ—ïπ–ÄÙÄâπŸ•ÖπëøäòàÏ((ÄÄÄÄÄÅçΩπÕ–Å…ïë•…ïç—QºÄÙÅπï‹ÅUI0†â•πëï‡π°—µ∞à∞Å±ΩçÖ—•Ω∏π°…ïò§π°…ïòÏ(ÄÄÄÄÄÅçΩπÕ–ÅÏÅï……Ω»ÅÙÄÙÅÖ›Ö•–Å›•πëΩ‹πAA}MUA	MπÖ’—†πÕ•ùπ%π]•—°=—¿°Ï(ÄÄÄÄÄÄÄÅïµÖ•∞∞(ÄÄÄÄÄÄÄÅΩ¡—•ΩπÃËÅÏÅïµÖ•±Iïë•…ïç—QºËÅ…ïë•…ïç—QºÅÙ(ÄÄÄÄÄÅÙ§Ï((ÄÄÄÄÄÅÕ’âµ•—	’——Ω∏πë•ÕÖâ±ïêÄÙÅôÖ±ÕîÏ(ÄÄÄÄÄÅÕ’âµ•—	’——Ω∏π—ï·—Ωπ—ïπ–ÄÙÄâπŸ•Ö»Å±•π¨ÅëîÅÖçïÕÕºàÏ(ÄÄÄÄÄÅ•òÄ°ï……Ω»§ÅÕ°Ω›QΩÖÕ–°ï……Ω»πµïÕÕÖùî§Ï(ÄÄÄÄÄÅï±ÕîÅÕ°Ω›QΩÖÕ–†â1•π¨ÅïπŸ•Öëº∏ÅΩπô•…ÑÅÕï‘ÅîµµÖ•∞∏à§Ï(ÄÄÄÅÙ§Ï(ÄÅÙ((ÄÅ•π•–†§Ï)Ù§†§Ï(
+  const ROOM_CODE = "1322";
+  const supabase = window.APP_SUPABASE;
+  const form = document.querySelector("#loginForm");
+  const nameInput = document.querySelector("#playerName");
+  const codeInput = document.querySelector("#roomCode");
+  const submitButton = form?.querySelector('button[type="submit"]');
+  const toast = document.querySelector("#toast");
+  const existing = document.querySelector("#existingPlayer");
+  const existingName = document.querySelector("#existingPlayerName");
+  const continueButton = document.querySelector("#continuePlayer");
+  const switchButton = document.querySelector("#switchPlayer");
+
+  function showToast(message) {
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add("show");
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => toast.classList.remove("show"), 2600);
+  }
+
+  function setBusy(busy) {
+    if (!submitButton) return;
+    submitButton.disabled = busy;
+    submitButton.textContent = busy ? "Entrando‚Ä¶" : "Entrar no bol√£o";
+  }
+
+  function cleanName(value) {
+    return String(value || "").trim().replace(/\s+/g, " ").slice(0, 24);
+  }
+
+  async function getDisplayName(user) {
+    if (!user || !supabase) return "";
+    const { data } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    return data?.display_name || user.user_metadata?.display_name || "Jogador";
+  }
+
+  function showExistingPlayer(name) {
+    if (!existing || !form) return;
+    existing.hidden = false;
+    form.hidden = true;
+    if (existingName) existingName.textContent = name;
+  }
+
+  function showJoinForm() {
+    if (!existing || !form) return;
+    existing.hidden = true;
+    form.hidden = false;
+    nameInput?.focus();
+  }
+
+  async function joinBolao(event) {
+    event.preventDefault();
+    if (!supabase) {
+      showToast("N√£o foi poss√≠vel conectar ao bol√£o.");
+      return;
+    }
+
+    const name = cleanName(nameInput?.value);
+    const code = String(codeInput?.value || "").trim();
+
+    if (name.length < 2) {
+      showToast("Digite seu nome.");
+      nameInput?.focus();
+      return;
+    }
+
+    if (code !== ROOM_CODE) {
+      showToast("C√≥digo da sala incorreto.");
+      codeInput?.select();
+      return;
+    }
+
+    setBusy(true);
+
+    const { data, error } = await supabase.auth.signInAnonymously({
+      options: {
+        data: { display_name: name }
+      }
+    });
+
+    if (error || !data?.user) {
+      setBusy(false);
+      console.error(error);
+      const message = String(error?.message || "");
+      if (/anonymous/i.test(message) && /disabled|not enabled/i.test(message)) {
+        showToast("Entrada sem e-mail ainda n√£o est√° habilitada no Supabase.");
+      } else {
+        showToast("N√£o foi poss√≠vel entrar agora.");
+      }
+      return;
+    }
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .upsert({
+        id: data.user.id,
+        display_name: name
+      }, { onConflict: "id" });
+
+    if (profileError) {
+      console.warn("Perfil ser√° lido pelos metadados da sess√£o:", profileError);
+    }
+
+    location.replace("index.html");
+  }
+
+  async function init() {
+    if (!supabase) {
+      showToast("Supabase n√£o carregou.");
+      return;
+    }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const name = await getDisplayName(session.user);
+      showExistingPlayer(name);
+    } else {
+      showJoinForm();
+    }
+
+    form?.addEventListener("submit", joinBolao);
+    continueButton?.addEventListener("click", () => location.replace("index.html"));
+
+    switchButton?.addEventListener("click", async () => {
+      switchButton.disabled = true;
+      await supabase.auth.signOut();
+      switchButton.disabled = false;
+      if (nameInput) nameInput.value = "";
+      if (codeInput) codeInput.value = "";
+      showJoinForm();
+    });
+  }
+
+  init();
+})();
