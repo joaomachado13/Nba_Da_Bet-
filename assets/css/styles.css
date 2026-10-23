@@ -2000,3 +2000,104 @@ html, body { background: var(--page); }
     padding-right: 8px;
   }
 }
+
+
+/* v1.2 — mobile com a mesma presença visual do desktop */
+@media (max-width: 899px) {
+  .game-card {
+    padding: 16px 14px 15px;
+    border-radius: 16px;
+    background:
+      linear-gradient(
+        90deg,
+        var(--away-soft, rgba(232,168,0,.14)) 0%,
+        rgba(255,255,255,.26) 34%,
+        rgba(255,255,255,.82) 48%,
+        rgba(255,255,255,.82) 52%,
+        rgba(255,255,255,.26) 66%,
+        var(--home-soft, rgba(232,168,0,.14)) 100%
+      ),
+      var(--surface-warm);
+  }
+
+  .team-watermark {
+    width: 136px;
+    height: 136px;
+    opacity: .075 !important;
+    filter: saturate(.92);
+  }
+
+  .team-watermark--away {
+    left: -28px;
+    -webkit-mask-image: linear-gradient(90deg,#000 0%,#000 66%,transparent 100%);
+    mask-image: linear-gradient(90deg,#000 0%,#000 66%,transparent 100%);
+  }
+
+  .team-watermark--home {
+    right: -28px;
+    -webkit-mask-image: linear-gradient(270deg,#000 0%,#000 66%,transparent 100%);
+    mask-image: linear-gradient(270deg,#000 0%,#000 66%,transparent 100%);
+  }
+
+  .game-meta {
+    margin-bottom: 13px;
+  }
+
+  .matchup {
+    min-height: 70px;
+  }
+
+  .team-mark {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+
+  .team-name {
+    font-size: 12.5px;
+    font-weight: 800;
+  }
+
+  .pick-actions {
+    margin-top: 14px;
+  }
+
+  .pick-button {
+    min-height: 50px;
+    border-radius: 13px;
+  }
+}
+
+@media (max-width: 440px) {
+  .game-card {
+    padding: 15px 13px 14px;
+  }
+
+  .team-watermark {
+    width: 122px;
+    height: 122px;
+    opacity: .07 !important;
+  }
+
+  .team-watermark--away { left: -25px; }
+  .team-watermark--home { right: -25px; }
+
+  .matchup {
+    min-height: 66px;
+  }
+
+  .team-mark {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+
+  .team-name {
+    font-size: 12px;
+  }
+
+  .pick-button {
+    min-height: 52px;
+    font-size: 11px;
+  }
+}
