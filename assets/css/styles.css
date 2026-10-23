@@ -1685,3 +1685,85 @@ html, body { background: var(--page); }
 .player-profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.player-profile-grid>div{padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--gold-ghost)}.player-profile-grid span{display:block;color:var(--muted);font-size:9px;text-transform:uppercase}.player-profile-grid strong{display:block;margin-top:4px;font-size:20px}
 .achievement-gallery-card{margin-top:14px}.achievement-gallery{display:grid;gap:7px}.gallery-achievement{min-height:54px;display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;gap:9px;padding:8px 9px;border:1px solid var(--line);border-radius:10px;background:#fff}.gallery-achievement>span{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:var(--gold-ghost);font-size:18px}.gallery-achievement strong,.gallery-achievement small{display:block}.gallery-achievement strong{font-size:11px}.gallery-achievement small{margin-top:2px;color:var(--muted);font-size:9px}.gallery-achievement.locked{opacity:.55;filter:saturate(.35)}
 .recap-winner{text-align:center;padding:8px 0 15px}.recap-winner>span{display:block;font-size:38px}.recap-winner strong{display:block;margin-top:5px;font-size:17px}.recap-winner small{display:block;margin-top:4px;color:var(--muted);font-size:10px}
+
+
+/* v1.0 — matchup mobile: nomes não invadem placar/centro */
+@media (max-width: 899px) {
+  .matchup {
+    grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  .team {
+    width: 100%;
+    min-width: 0;
+    gap: 7px;
+  }
+
+  .team-copy {
+    flex: 1 1 0;
+    width: 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .team-name-row {
+    width: 100%;
+    min-width: 0;
+    gap: 5px;
+  }
+
+  .team-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    display: -webkit-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-height: 1.08;
+  }
+
+  .team-score {
+    flex: 0 0 auto;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .team.away .team-score {
+    order: -1;
+  }
+
+  .team.away .team-name {
+    text-align: right;
+  }
+
+  .vs {
+    width: 24px;
+    height: 24px;
+    align-self: center;
+  }
+}
+
+@media (max-width: 440px) {
+  .team {
+    gap: 6px;
+  }
+
+  .team-mark {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+
+  .team-name {
+    font-size: 11px;
+  }
+
+  .team-score {
+    font-size: 17px;
+  }
+}
