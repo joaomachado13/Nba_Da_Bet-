@@ -379,18 +379,60 @@ revoke all on function private.sync_nba_date(date) from public, anon, authentica
 revoke all on function private.sync_nba_window(date, integer) from public, anon, authenticated;
 revoke all on function private.sync_nba_current_round() from public, anon, authenticated;
 
--- Limpeza defensiva dos aliases existentes. Execute junto com a publicação.
--- Os cinco duplicados atuais de 23/10/2026 não possuem palpites.
-delete from public.games
-where id in ('401909095','401909846','401909096','401909849','401909850')
-  and not exists (select 1 from public.predictions p where p.game_id = public.games.id);
+-- Limpeza defensiva e genérica de partidas equivalentes.
+-- Mantém preferencialmente o ID 002... já usado pelo bolão e migra qualquer
+-- palpite ligado a uma cópia antes de removê-la.
+drop table if exists pg_temp.nba_game_merge;
 
-update public.games set
-  away_team_code = private.normalize_nba_team_code(away_team_code),
-  home_team_code = private.normalize_nba_team_code(home_team_code);
+create temporary table nba_game_merge on commit drop as
+with ranked as (
+  select
+    g.id,
+    first_value(g.id) over (
+      partition by
+        g.round_date,
+        private.normalize_nba_team_code(g.away_team_code),
+        private.normalize_nba_team_code(g.home_team_code)
+      order by
+        case when g.id like '002%' then 0 else 1 end,
+        g.created_at,
+        g.id
+    ) as canonical_id
+  from public.games g
+)
+select id as duplicate_id, canonical_id
+from ranked
+where id <> canonical_id;
+
+delete from public.predictions p
+using pg_temp.nba_game_merge m
+where p.game_id = m.duplicate_id
+  and exists (
+    select 1
+    from public.predictions keep
+    where keep.user_id = p.user_id
+      and keep.game_id = m.canonical_id
+  );
+
+update public.predictions p
+set game_id = m.canonical_id,
+    picked_team_code = private.normalize_nba_team_code(p.picked_team_code),
+    updated_at = now()
+from pg_temp.nba_game_merge m
+where p.game_id = m.duplicate_id;
+
+delete from public.games g
+using pg_temp.nba_game_merge m
+where g.id = m.duplicate_id;
+
+update public.games
+set away_team_code = private.normalize_nba_team_code(away_team_code),
+    home_team_code = private.normalize_nba_team_code(home_team_code),
+    updated_at = now();
 
 update public.predictions
-set picked_team_code = private.normalize_nba_team_code(picked_team_code);
+set picked_team_code = private.normalize_nba_team_code(picked_team_code),
+    updated_at = now();
 
 create unique index if not exists games_round_match_unique
   on public.games(round_date, away_team_code, home_team_code);
