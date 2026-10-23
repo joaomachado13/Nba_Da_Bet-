@@ -46,20 +46,35 @@ language plpgsql
 immutable
 strict
 set search_path = pg_catalog
-as $$
+as $
 declare
   v_parts text[];
+  v_value numeric;
 begin
-  if trim(p_clock) = '' then return null; end if;
-  v_parts := string_to_array(trim(p_clock), ':');
-  if array_length(v_parts, 1) = 2 then
-    return greatest(0, floor(v_parts[1]::numeric * 60 + v_parts[2]::numeric)::integer);
+  if trim(p_clock) = '' then
+    return null;
   end if;
+
+  v_parts := string_to_array(trim(p_clock), ':');
+
+  if array_length(v_parts, 1) = 2 then
+    return greatest(
+      0,
+      floor(v_parts[1]::numeric * 60 + v_parts[2]::numeric)::integer
+    );
+  end if;
+
+  -- A ESPN às vezes devolve os segundos finais como "32.0" em vez de "0:32".
+  if array_length(v_parts, 1) = 1 then
+    v_value := trim(p_clock)::numeric;
+    return greatest(0, floor(v_value)::integer);
+  end if;
+
   return null;
 exception when others then
   return null;
 end;
-$$;
+$;
 
 revoke all on function private.clock_to_seconds(text) from public, anon, authenticated;
 
