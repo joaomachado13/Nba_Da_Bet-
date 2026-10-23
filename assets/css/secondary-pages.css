@@ -218,3 +218,112 @@
     grid-template-columns: repeat(4, minmax(0,1fr));
   }
 }
+
+/* Detalhamento dos palpites por rodada */
+.detail-card__intro {
+  margin: -7px 0 13px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+.community-rounds {
+  display: grid;
+  gap: 14px;
+}
+.community-round {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.community-round:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+.community-round__head,
+.community-game__head,
+.community-votes__team {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.community-round__head strong {
+  text-transform: capitalize;
+  font-size: 12px;
+}
+.community-round__head span,
+.community-game__head span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+.community-games {
+  margin-top: 8px;
+  display: grid;
+  gap: 8px;
+}
+.community-game {
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fff;
+}
+.community-game__head {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.community-game__head strong {
+  font-size: 12px;
+}
+.community-votes {
+  margin-top: 9px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 8px;
+}
+.community-votes > div {
+  min-width: 0;
+  padding: 8px;
+  border-radius: 9px;
+  background: var(--gold-ghost);
+}
+.community-votes__team strong {
+  color: #805800;
+  font-size: 11px;
+}
+.community-votes__team b {
+  font-size: 15px;
+}
+.community-voters {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.community-voters span,
+.community-voters em {
+  max-width: 100%;
+  padding: 3px 5px;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 9px;
+  font-style: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.community-voters span.is-you {
+  border: 1px solid var(--gold-border);
+  color: #805800;
+  font-weight: 800;
+}
+.community-empty {
+  padding: 14px 0 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+
+.weekly-mission{padding:15px;display:flex;gap:12px;border:1px solid var(--gold-border);border-radius:var(--radius-lg);background:linear-gradient(145deg,#fff,var(--gold-ghost));box-shadow:var(--shadow-card)}.mission-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:11px;background:var(--gold-soft);font-size:19px}.weekly-mission h3{margin:3px 0 4px;font-size:17px}.weekly-mission p{margin:0;color:var(--ink-2);font-size:11px}.weekly-mission small{display:block;margin-top:7px;color:var(--muted);font-size:9px}.mission-score{margin-top:8px;display:flex;gap:8px;align-items:center}.mission-score strong{font-size:21px}
+.season-records,.round-recaps{display:grid}.season-record{min-height:52px;display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:9px;border-top:1px solid var(--line)}.season-record:first-child{border-top:0}.season-record>span{font-size:20px}.season-record strong,.season-record small{display:block}.season-record strong{font-size:11px}.season-record small{margin-top:2px;color:var(--muted);font-size:9px}.season-record b{font-size:11px;color:#805800}
+.recap-row{min-height:48px;display:grid;grid-template-columns:minmax(100px,.7fr) minmax(0,1fr);align-items:center;gap:9px;border-top:1px solid var(--line)}.recap-row:first-child{border-top:0}.recap-row strong,.recap-row small{display:block}.recap-row strong{font-size:11px}.recap-row small{margin-top:2px;color:var(--muted);font-size:9px}.recap-row>span:nth-child(2){font-size:10px;color:var(--ink-2)}

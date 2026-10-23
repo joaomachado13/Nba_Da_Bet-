@@ -188,7 +188,6 @@
       return;
     }
 
-    // Depois do fechamento a RLS libera os palpites da rodada para comparação.
     const predictionParams = new URLSearchParams({
       select: "user_id,game_id,picked_team_code",
       game_id: `in.(${gameIds.join(",")})`,
@@ -202,32 +201,14 @@
         .map(row => [String(row.game_id), row.picked_team_code])
     );
 
-    const userIds = [...new Set(rows.map(row => row.user_id).filter(Boolean))];
-    let names = {};
-
-    if (userIds.length) {
-      const profileParams = new URLSearchParams({
-        select: "id,display_name",
-        id: `in.(${userIds.join(",")})`,
-        order: "display_name.asc"
-      });
-      const profiles = await restRequest(`profiles?${profileParams}`) || [];
-      names = Object.fromEntries(profiles.map(profile => [profile.id, profile.display_name || "Jogador"]));
-    }
-
     revealedPicks = {};
     rows.forEach(row => {
       const gameId = String(row.game_id);
       if (!revealedPicks[gameId]) revealedPicks[gameId] = [];
       revealedPicks[gameId].push({
         user_id: row.user_id,
-        display_name: names[row.user_id] || "Jogador",
         picked_team_code: row.picked_team_code
       });
-    });
-
-    Object.values(revealedPicks).forEach(list => {
-      list.sort((a, b) => String(a.display_name).localeCompare(String(b.display_name), "pt-BR"));
     });
   }
 
@@ -383,33 +364,26 @@
     if (!locked) return "";
 
     const list = revealedPicks[game.id] || [];
-    if (!list.length) {
-      return `
-        <div class="revealed-picks">
-          <div class="revealed-picks__head">
-            <strong>Palpites da galera</strong>
-            <span>0 palpites</span>
-          </div>
-          <p class="revealed-picks__empty">Ninguém palpitou neste jogo.</p>
-        </div>`;
-    }
-
-    const chips = list.map(item => {
-      const isYou = item.user_id === currentUser?.id;
-      return `
-        <span class="revealed-pick ${isYou ? "is-you" : ""}">
-          <span class="revealed-pick__name">${escapeHtml(item.display_name)}${isYou ? " · você" : ""}</span>
-          <strong class="revealed-pick__team">${escapeHtml(item.picked_team_code)}</strong>
-        </span>`;
-    }).join("");
+    const awayCount = list.filter(item => item.picked_team_code === game.away.code).length;
+    const homeCount = list.filter(item => item.picked_team_code === game.home.code).length;
+    const total = list.length;
+    const awayPercent = total ? Math.round((awayCount / total) * 100) : 0;
+    const homePercent = total ? 100 - awayPercent : 0;
 
     return `
-      <div class="revealed-picks">
-        <div class="revealed-picks__head">
+      <div class="crowd-summary">
+        <div class="crowd-summary__head">
           <strong>Palpites da galera</strong>
-          <span>${list.length} ${list.length === 1 ? "palpite" : "palpites"}</span>
+          <span>${total} ${total === 1 ? "palpite" : "palpites"}</span>
         </div>
-        <div class="revealed-picks__list">${chips}</div>
+        <div class="crowd-summary__votes">
+          <span><b>${escapeHtml(game.away.code)}</b><strong>${awayCount}</strong></span>
+          <span><strong>${homeCount}</strong><b>${escapeHtml(game.home.code)}</b></span>
+        </div>
+        <div class="crowd-summary__bar" aria-label="${escapeHtml(game.away.code)} ${awayPercent}%, ${escapeHtml(game.home.code)} ${homePercent}%">
+          <i style="width:${awayPercent}%"></i>
+          <b style="width:${homePercent}%"></b>
+        </div>
       </div>`;
   }
 
@@ -576,18 +550,28 @@
     const nextKey = d.toISOString().slice(0,10);
 
     const params = new URLSearchParams({
-      select: "start_at,away_team_code,home_team_code",
+      select: "id,start_at,away_team_code,home_team_code",
       round_date: `eq.${nextKey}`,
       status: "neq.cancelled",
       order: "start_at.asc"
     });
     const rows = await restRequest(`games?${params}`) || [];
 
+    const aliases = { NY: "NYK", WSH: "WAS", SA: "SAS", NO: "NOP", GS: "GSW", UTAH: "UTA" };
+    const canonical = code => aliases[String(code || "").toUpperCase()] || String(code || "").toUpperCase();
+    const seen = new Set();
+    const uniqueRows = rows.filter(row => {
+      const key = `${canonical(row.away_team_code)}|${canonical(row.home_team_code)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
     nextRoundTitleEl.textContent = "Amanhã";
-    nextRoundGamesEl.textContent = `${rows.length} ${rows.length === 1 ? "jogo" : "jogos"}`;
-    const first = rows[0];
+    nextRoundGamesEl.textContent = `${uniqueRows.length} ${uniqueRows.length === 1 ? "jogo" : "jogos"}`;
+    const first = uniqueRows[0];
     if (first) {
-      nextRoundMatchEl.innerHTML = `<span class="next-round-time">${formatTime(first.start_at)}</span><span class="next-round-teams"><b>${first.away_team_code}</b><span>@</span><b>${first.home_team_code}</b></span>`;
+      nextRoundMatchEl.innerHTML = `<span class="next-round-time">${formatTime(first.start_at)}</span><span class="next-round-teams"><b>${canonical(first.away_team_code)}</b><span>@</span><b>${canonical(first.home_team_code)}</b></span>`;
     } else {
       nextRoundMatchEl.textContent = "Sem jogos programados.";
     }

@@ -36,12 +36,22 @@
         </div>
       </section>
 
+      <section class="detail-card achievement-gallery-card"><div class="detail-card__head"><div><span class="section-kicker">CONQUISTAS</span><h3>Sua galeria</h3></div></div><div class="achievement-gallery" id="achievementGallery"></div></section>
       <section class="family-banner">
         <span class="section-kicker">TEMPORADA 26/27</span>
         <h2>Cada rodada conta.<br><em>Cada palpite também.</em></h2>
         <div class="banner-ball" aria-hidden="true">🏀</div>
       </section>
     </main>
+
+    <dialog class="info-dialog" id="playerProfileDialog"><div class="info-dialog__head"><h2 id="playerProfileTitle">Perfil</h2><button class="dialog-close" type="button" aria-label="Fechar">×</button></div><div class="info-dialog__body" id="playerProfileBody"></div></dialog>
+    <dialog class="info-dialog achievement-dialog" id="achievementDialog">
+      <div class="info-dialog__head">
+        <h2 id="achievementDialogTitle">Conquista</h2>
+        <button class="dialog-close" type="button" aria-label="Fechar">×</button>
+      </div>
+      <div class="info-dialog__body" id="achievementDialogBody"></div>
+    </dialog>
 
     <nav class="bottom-nav" aria-label="Navegação principal">
       <a class="nav-item" href="index.html"><span>⌂</span><small>Palpites</small></a>
@@ -55,6 +65,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
   <script src="assets/js/config.js"></script>
   <script src="assets/js/supabase-client.js"></script>
-  <script src="assets/js/ranking.js"></script>
+  <script src="assets/js/season.js"></script>
+  <script src="assets/js/achievements.js"></script>\n  <script src="assets/js/ranking.js"></script>
+  <script src="assets/js/experience.js"></script>
 </body>
 </html>
