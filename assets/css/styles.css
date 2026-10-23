@@ -2101,3 +2101,79 @@ html, body { background: var(--page); }
     font-size: 11px;
   }
 }
+
+
+/* v1.3 — desktop: confronto ocupa as extremidades, meta fica em trilho lateral */
+@media (min-width: 900px) {
+  .game-card {
+    grid-template-columns: 60px minmax(0, 1fr);
+    column-gap: 10px;
+    padding-left: 12px;
+    padding-right: 16px;
+  }
+
+  .game-meta {
+    padding-right: 8px;
+    border-right-color: rgba(212,207,195,.78);
+  }
+
+  .game-time {
+    font-size: 18px;
+  }
+
+  .game-status {
+    max-width: 58px;
+    font-size: 8.5px;
+    line-height: 1.15;
+    letter-spacing: .045em;
+  }
+
+  .matchup {
+    width: 100%;
+    grid-template-columns: minmax(0,1fr) 26px minmax(0,1fr);
+    gap: 6px;
+  }
+
+  .matchup > .team:first-child {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .matchup > .team.away {
+    justify-content: flex-end;
+    text-align: right;
+  }
+
+  .matchup > .team:first-child .team-copy {
+    align-items: flex-start;
+  }
+
+  .team.away .team-copy {
+    align-items: flex-end;
+  }
+
+  .pick-actions {
+    width: 100%;
+    grid-template-columns: minmax(0,1fr) 26px minmax(0,1fr);
+    gap: 6px;
+  }
+
+  .pick-actions__spacer {
+    width: 26px;
+  }
+
+  .team-watermark--away {
+    left: -38px;
+  }
+
+  .team-watermark--home {
+    right: -38px;
+  }
+}
+
+@media (min-width: 1180px) {
+  .game-card {
+    grid-template-columns: 64px minmax(0,1fr);
+    column-gap: 10px;
+  }
+}
