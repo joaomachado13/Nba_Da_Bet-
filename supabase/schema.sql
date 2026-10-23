@@ -48,3 +48,55 @@ create table public.predictions (
 -- insert/update/delete: somente o próprio usuário e somente antes do primeiro jogo da rodada.
 -- standings: view security_invoker calculada a partir de resultados finais.
 -- daily_rounds: view security_invoker calculando lock_at = primeiro jogo válido do round_date.
+
+
+
+create table if not exists public.round_confirmations (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  round_date date not null,
+  confirmed_at timestamptz not null default now(),
+  total_games integer not null default 0 check (total_games >= 0),
+  picked_games integer not null default 0 check (picked_games >= 0),
+  incomplete_count integer not null default 0 check (incomplete_count >= 0),
+  primary key (user_id, round_date)
+);
+
+alter table public.round_confirmations enable row level security;
+
+drop policy if exists "round confirmations own select" on public.round_confirmations;
+create policy "round confirmations own select" on public.round_confirmations
+for select to authenticated
+using (
+  (select auth.uid()) = user_id
+  and coalesce(((select auth.jwt()) ->> 'is_anonymous')::boolean, false) = false
+);
+
+drop policy if exists "round confirmations own insert" on public.round_confirmations;
+create policy "round confirmations own insert" on public.round_confirmations
+for insert to authenticated
+with check (
+  (select auth.uid()) = user_id
+  and coalesce(((select auth.jwt()) ->> 'is_anonymous')::boolean, false) = false
+);
+
+drop policy if exists "round confirmations own update" on public.round_confirmations;
+create policy "round confirmations own update" on public.round_confirmations
+for update to authenticated
+using (
+  (select auth.uid()) = user_id
+  and coalesce(((select auth.jwt()) ->> 'is_anonymous')::boolean, false) = false
+)
+with check (
+  (select auth.uid()) = user_id
+  and coalesce(((select auth.jwt()) ->> 'is_anonymous')::boolean, false) = false
+);
+
+drop policy if exists "round confirmations own delete" on public.round_confirmations;
+create policy "round confirmations own delete" on public.round_confirmations
+for delete to authenticated
+using (
+  (select auth.uid()) = user_id
+  and coalesce(((select auth.jwt()) ->> 'is_anonymous')::boolean, false) = false
+);
+
+grant select, insert, update, delete on public.round_confirmations to authenticated;

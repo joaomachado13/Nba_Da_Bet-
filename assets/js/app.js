@@ -24,6 +24,12 @@
   const nextRoundTitleEl = document.querySelector("#nextRoundTitle");
   const nextRoundGamesEl = document.querySelector("#nextRoundGames");
   const nextRoundMatchEl = document.querySelector("#nextRoundMatch");
+  const roundFinalizeEl = document.querySelector("#roundFinalize");
+  const roundFinalizeSummaryEl = document.querySelector("#roundFinalizeSummary");
+  const roundFinalizeCountEl = document.querySelector("#roundFinalizeCount");
+  const roundFinalizeWarningEl = document.querySelector("#roundFinalizeWarning");
+  const roundFinalizeButtonEl = document.querySelector("#roundFinalizeButton");
+  const roundFinalizeNoteEl = document.querySelector("#roundFinalizeNote");
 
   let games = [];
   let lockAt = null;
@@ -35,6 +41,8 @@
   let currentProfile = null;
   let sourceName = "supabase";
   let previousLockedState = null;
+  let roundConfirmation = null;
+  let finalizeArmed = false;
 
   function showToast(message) {
     toast.textContent = message;
@@ -242,6 +250,162 @@
         picked_team_code: teamCode
       })
     });
+  }
+
+
+  async function loadRoundConfirmation() {
+    if (!currentUser) return;
+    const params = new URLSearchParams({
+      select: "round_date,confirmed_at,total_games,picked_games,incomplete_count",
+      user_id: `eq.${currentUser.id}`,
+      round_date: `eq.${todayKey()}`,
+      limit: "1"
+    });
+    const rows = await restRequest(`round_confirmations?${params}`);
+    roundConfirmation = rows?.[0] || null;
+    finalizeArmed = false;
+  }
+
+  async function clearRoundConfirmation() {
+    if (!currentUser || !roundConfirmation) return;
+    const params = new URLSearchParams({
+      user_id: `eq.${currentUser.id}`,
+      round_date: `eq.${todayKey()}`
+    });
+
+    roundConfirmation = null;
+    finalizeArmed = false;
+
+    try {
+      await restRequest(`round_confirmations?${params}`, {
+        method: "DELETE",
+        headers: { Prefer: "return=minimal" }
+      });
+    } catch (error) {
+      console.warn("[Bolão] Não foi possível invalidar a confirmação anterior:", error);
+    }
+  }
+
+  function pickableGames() {
+    return games.filter(game => gameState(game) !== "postponed");
+  }
+
+  function missingPickGames() {
+    return pickableGames().filter(game => !picks[game.id]);
+  }
+
+  function renderRoundFinalize() {
+    if (!roundFinalizeEl || !roundFinalizeButtonEl) return;
+
+    const validGames = pickableGames();
+    const missing = missingPickGames();
+    const done = validGames.length - missing.length;
+    const locked = isLocked();
+
+    roundFinalizeCountEl.textContent = `${done}/${validGames.length}`;
+
+    if (!validGames.length) {
+      roundFinalizeEl.hidden = true;
+      return;
+    }
+
+    roundFinalizeEl.hidden = false;
+    roundFinalizeWarningEl.hidden = true;
+    roundFinalizeWarningEl.innerHTML = "";
+
+    if (roundConfirmation) {
+      roundFinalizeEl.classList.add("is-confirmed");
+      roundFinalizeEl.classList.remove("has-warning");
+      roundFinalizeSummaryEl.textContent = roundConfirmation.incomplete_count
+        ? `Rodada confirmada com ${roundConfirmation.incomplete_count} ${roundConfirmation.incomplete_count === 1 ? "jogo sem palpite" : "jogos sem palpite"}.`
+        : "Rodada confirmada. Seus palpites estão revisados.";
+      roundFinalizeButtonEl.textContent = "✓ Rodada confirmada";
+      roundFinalizeButtonEl.disabled = true;
+      roundFinalizeNoteEl.textContent = locked
+        ? "A rodada já está fechada."
+        : "Você ainda pode alterar um palpite antes do fechamento; se alterar, confirme novamente.";
+      return;
+    }
+
+    roundFinalizeEl.classList.remove("is-confirmed");
+
+    if (locked) {
+      roundFinalizeEl.classList.remove("has-warning");
+      roundFinalizeSummaryEl.textContent = `Rodada fechada · ${done}/${validGames.length} palpites registrados.`;
+      roundFinalizeButtonEl.textContent = "Rodada encerrada";
+      roundFinalizeButtonEl.disabled = true;
+      roundFinalizeNoteEl.textContent = "O horário de fechamento já passou.";
+      return;
+    }
+
+    roundFinalizeButtonEl.disabled = false;
+    roundFinalizeSummaryEl.textContent = missing.length
+      ? `Você ainda tem ${missing.length} ${missing.length === 1 ? "jogo sem palpite" : "jogos sem palpite"}.`
+      : "Todos os jogos têm palpite. Pode confirmar.";
+
+    if (finalizeArmed && missing.length) {
+      roundFinalizeEl.classList.add("has-warning");
+      roundFinalizeWarningEl.hidden = false;
+      roundFinalizeWarningEl.innerHTML = `
+        <strong>⚠ ATENÇÃO: sua rodada está incompleta</strong>
+        <p>Faltam ${missing.length} ${missing.length === 1 ? "palpite" : "palpites"}:</p>
+        <ul>${missing.map(game => `<li>${escapeHtml(game.away.name)} × ${escapeHtml(game.home.name)}</li>`).join("")}</ul>
+        <b>Se quiser seguir mesmo assim, aperte o botão novamente.</b>`;
+      roundFinalizeButtonEl.textContent = "Confirmar mesmo assim";
+      roundFinalizeNoteEl.textContent = "O aviso não bloqueia a confirmação.";
+    } else {
+      roundFinalizeEl.classList.remove("has-warning");
+      roundFinalizeButtonEl.textContent = "Confirmar rodada";
+      roundFinalizeNoteEl.textContent = "A confirmação não trava seus palpites antes do horário de fechamento.";
+    }
+  }
+
+  async function confirmRound() {
+    if (!currentUser || isLocked()) {
+      showToast("A rodada já está fechada.");
+      renderRoundFinalize();
+      return;
+    }
+
+    const validGames = pickableGames();
+    const missing = missingPickGames();
+
+    if (missing.length && !finalizeArmed) {
+      finalizeArmed = true;
+      renderRoundFinalize();
+      roundFinalizeEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    roundFinalizeButtonEl.disabled = true;
+    roundFinalizeButtonEl.textContent = "Confirmando…";
+
+    const payload = {
+      user_id: currentUser.id,
+      round_date: todayKey(),
+      confirmed_at: new Date().toISOString(),
+      total_games: validGames.length,
+      picked_games: validGames.length - missing.length,
+      incomplete_count: missing.length
+    };
+    const params = new URLSearchParams({ on_conflict: "user_id,round_date" });
+
+    try {
+      await restRequest(`round_confirmations?${params}`, {
+        method: "POST",
+        headers: { Prefer: "resolution=merge-duplicates,return=representation" },
+        body: JSON.stringify(payload)
+      });
+      roundConfirmation = payload;
+      finalizeArmed = false;
+      renderRoundFinalize();
+      showToast(missing.length ? "✓ Rodada confirmada mesmo incompleta." : "✓ Rodada confirmada.");
+    } catch (error) {
+      roundFinalizeButtonEl.disabled = false;
+      renderRoundFinalize();
+      showToast("Não foi possível confirmar a rodada.");
+      throw error;
+    }
   }
 
   function formatTime(iso) {
@@ -522,7 +686,12 @@
         renderGames();
         btn.disabled = true;
         persistPick(card.dataset.gameId, btn.dataset.pick)
-          .then(() => showToast(`✓ Palpite salvo em ${btn.dataset.pick}`))
+          .then(async () => {
+            if (roundConfirmation) await clearRoundConfirmation();
+            finalizeArmed = false;
+            renderRoundFinalize();
+            showToast(`✓ Palpite salvo em ${btn.dataset.pick}`);
+          })
           .catch(error => {
             if (previous) picks[card.dataset.gameId] = previous; else delete picks[card.dataset.gameId];
             renderGames();
@@ -533,6 +702,7 @@
     });
 
     updateProgress();
+    renderRoundFinalize();
   }
 
   function updateProgress() {
@@ -772,6 +942,7 @@
     games = await resolveGames();
     await loadPredictions();
     lockAt = window.BolaoRules.computeLockAt(games);
+    await loadRoundConfirmation();
     renderGames();
     await renderMiniRanking();
     await renderNextRound();
@@ -787,6 +958,7 @@
         if (freshGames) games = freshGames;
         await loadPredictions();
         lockAt = window.BolaoRules.computeLockAt(games);
+        await loadRoundConfirmation();
         renderGames();
         await renderMiniRanking();
         await renderNextRound();
@@ -813,6 +985,9 @@
       });
     });
     setupInfoDialog();
+    roundFinalizeButtonEl?.addEventListener("click", () => {
+      confirmRound().catch(error => console.error("[Bolão] Confirmação da rodada:", error));
+    });
 
     // Mantido apenas para diagnóstico no console; não aparece na interface.
     console.info(`[Bolão] Fonte dos jogos: ${sourceName}`);

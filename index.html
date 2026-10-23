@@ -57,6 +57,24 @@
         </div>
         <div class="games-list" id="gamesList" aria-live="polite"></div>
 
+        <section class="round-finalize" id="roundFinalize" aria-labelledby="roundFinalizeTitle">
+          <div class="round-finalize__head">
+            <div>
+              <span class="section-kicker">REVISÃO FINAL</span>
+              <h3 id="roundFinalizeTitle">Confirme seus palpites</h3>
+              <p id="roundFinalizeSummary">Confira a rodada antes do fechamento.</p>
+            </div>
+            <span class="round-finalize__count" id="roundFinalizeCount">0/0</span>
+          </div>
+
+          <div class="round-finalize__warning" id="roundFinalizeWarning" hidden></div>
+
+          <button class="round-finalize__button" id="roundFinalizeButton" type="button">
+            Confirmar rodada
+          </button>
+          <p class="round-finalize__note" id="roundFinalizeNote">A confirmação não trava seus palpites antes do horário de fechamento.</p>
+        </section>
+
         <section class="season-glance" aria-labelledby="seasonGlanceTitle">
           <div class="season-glance__copy">
             <span class="section-kicker">NA TEMPORADA</span>
