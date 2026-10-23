@@ -127,16 +127,40 @@
       return w || String(a.display_name || "").localeCompare(String(b.display_name || ""), "pt-BR");
     });
 
+    const hasDecidedGames = sortedRows.some(person => Number(person.decided_picks || 0) > 0);
+    const topPoints = Number(sortedRows[0]?.points || 0);
+    const topWins = season.byUser[sortedRows[0]?.user_id]?.wins || 0;
+    const topTied = sortedRows.filter(person =>
+      Number(person.points || 0) === topPoints &&
+      (season.byUser[person.user_id]?.wins || 0) === topWins
+    ).length > 1;
+
     host.innerHTML = sortedRows.map((person, index) => {
       const name = person.display_name || "Jogador";
       const isYou = person.user_id === currentUserId;
       const phase = season.byUser[person.user_id] || {};
       const move = Number(phase.movement || 0);
-      const movement = move > 0 ? `<span class="rank-movement up">↑${move}</span>` : move < 0 ? `<span class="rank-movement down">↓${Math.abs(move)}</span>` : '<span class="rank-movement neutral">—</span>';
-      const moment = phase.currentStreak >= 2 ? `🔥 ${phase.currentStreak} seguidos` : phase.recentTotal ? `🎯 ${phase.recentCorrect}/${phase.recentTotal} recentes` : "Começando";
+      const movement = hasDecidedGames
+        ? (move > 0 ? `<span class="rank-movement up">↑${move}</span>` : move < 0 ? `<span class="rank-movement down">↓${Math.abs(move)}</span>` : '<span class="rank-movement neutral">—</span>')
+        : "";
+
+      const sameScoreBefore = sortedRows.slice(0, index).filter(other =>
+        Number(other.points || 0) === Number(person.points || 0) &&
+        (season.byUser[other.user_id]?.wins || 0) === (phase.wins || 0)
+      ).length;
+      const position = hasDecidedGames ? (index + 1 - sameScoreBefore) : null;
+      const uniqueLeader = position === 1 && !topTied;
+      const positionLabel = !position ? "—" : uniqueLeader ? "♛" : position;
+
+      const moment = phase.currentStreak >= 2
+        ? `🔥 ${phase.currentStreak} seguidos`
+        : phase.recentTotal
+          ? `🎯 ${phase.recentCorrect}/${phase.recentTotal} recentes`
+          : "Aguardando primeira rodada decidida";
+
       return `
-        <article class="rank-row rank-row--achievements ${index === 0 ? "first" : ""} ${isYou ? "is-you" : ""}" data-user-id="${person.user_id}">
-          <div class="rank-position">${index === 0 ? "♛" : index + 1}${movement}</div>
+        <article class="rank-row rank-row--achievements ${uniqueLeader ? "first" : ""} ${isYou ? "is-you" : ""}" data-user-id="${person.user_id}">
+          <div class="rank-position">${positionLabel}${movement}</div>
           <div class="rank-person">
             <div class="avatar">${escapeHtml(initials(name))}</div>
             <div class="rank-person__copy">

@@ -29,6 +29,7 @@
   let lockAt = null;
   let picks = {};
   let revealedPicks = {};
+  let revealedNames = {};
   let currentUser = null;
   let currentAccessToken = "";
   let currentProfile = null;
@@ -169,6 +170,7 @@
     if (!currentUser || !games.length) {
       picks = {};
       revealedPicks = {};
+      revealedNames = {};
       return;
     }
 
@@ -185,6 +187,7 @@
       const rows = await restRequest(`predictions?${params}`);
       picks = Object.fromEntries((rows || []).map(row => [String(row.game_id), row.picked_team_code]));
       revealedPicks = {};
+      revealedNames = {};
       return;
     }
 
@@ -210,6 +213,19 @@
         picked_team_code: row.picked_team_code
       });
     });
+
+    const userIds = [...new Set(rows.map(row => row.user_id).filter(Boolean))];
+    revealedNames = {};
+    if (userIds.length) {
+      const profileParams = new URLSearchParams({
+        select: "id,display_name",
+        id: `in.(${userIds.join(",")})`
+      });
+      const profiles = await restRequest(`profiles?${profileParams}`) || [];
+      revealedNames = Object.fromEntries(
+        profiles.map(profile => [profile.id, profile.display_name || "Jogador"])
+      );
+    }
   }
 
   async function persistPick(gameId, teamCode) {
@@ -364,11 +380,21 @@
     if (!locked) return "";
 
     const list = revealedPicks[game.id] || [];
-    const awayCount = list.filter(item => item.picked_team_code === game.away.code).length;
-    const homeCount = list.filter(item => item.picked_team_code === game.home.code).length;
+    const awayPicks = list.filter(item => item.picked_team_code === game.away.code);
+    const homePicks = list.filter(item => item.picked_team_code === game.home.code);
+    const awayCount = awayPicks.length;
+    const homeCount = homePicks.length;
     const total = list.length;
     const awayPercent = total ? Math.round((awayCount / total) * 100) : 0;
     const homePercent = total ? 100 - awayPercent : 0;
+
+    const votersMarkup = picksList => picksList.length
+      ? picksList.map(item => {
+          const name = revealedNames[item.user_id] || "Jogador";
+          const you = item.user_id === currentUser?.id;
+          return `<span class="crowd-voter ${you ? "is-you" : ""}">${escapeHtml(name)}${you ? " · você" : ""}</span>`;
+        }).join("")
+      : '<span class="crowd-voter crowd-voter--empty">Ninguém</span>';
 
     return `
       <div class="crowd-summary">
@@ -384,6 +410,22 @@
           <i style="width:${awayPercent}%"></i>
           <b style="width:${homePercent}%"></b>
         </div>
+        <details class="crowd-details">
+          <summary>
+            <span>Ver quem foi em quem</span>
+            <b aria-hidden="true">⌄</b>
+          </summary>
+          <div class="crowd-details__grid">
+            <div class="crowd-side">
+              <strong>${escapeHtml(game.away.code)} · ${awayCount}</strong>
+              <div class="crowd-voters">${votersMarkup(awayPicks)}</div>
+            </div>
+            <div class="crowd-side crowd-side--home">
+              <strong>${escapeHtml(game.home.code)} · ${homeCount}</strong>
+              <div class="crowd-voters">${votersMarkup(homePicks)}</div>
+            </div>
+          </div>
+        </details>
       </div>`;
   }
 
