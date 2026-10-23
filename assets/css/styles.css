@@ -1909,3 +1909,94 @@ html, body { background: var(--page); }
     padding: 7px 6px;
   }
 }
+
+
+/* v1.2 — ranking mobile mais claro e compacto */
+.rank-position-wrap {
+  width: 34px;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 3px;
+}
+.rank-position-wrap .rank-position {
+  width: 32px;
+  height: 32px;
+}
+.rank-tie {
+  color: var(--muted-2);
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: .05em;
+}
+.rank-position-wrap .rank-movement {
+  margin-top: 0;
+}
+.rank-meta-dot {
+  display: inline-block;
+  margin: 0 4px;
+  color: var(--muted-2);
+}
+.rank-row--achievements .achievement-row {
+  margin-top: 7px;
+}
+.rank-row--achievements .achievement-stack {
+  min-height: 28px;
+  padding: 2px 8px 2px 4px;
+}
+.rank-row--achievements .achievement-pile {
+  min-width: 22px;
+  height: 21px;
+}
+.rank-row--achievements .achievement-pile i {
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+}
+.rank-row--achievements .achievement-stack__copy strong {
+  display: inline;
+  font-size: 8px;
+}
+.rank-row--achievements .achievement-stack__copy small {
+  font-size: 8px;
+}
+@media (max-width: 600px) {
+  .rank-row {
+    grid-template-columns: 34px minmax(0,1fr) auto;
+    align-items: start;
+  }
+  .rank-position-wrap {
+    width: 32px;
+  }
+  .rank-position-wrap .rank-position {
+    width: 30px;
+    height: 30px;
+    font-size: 11px;
+  }
+  .rank-name {
+    font-size: 14px;
+    line-height: 1.12;
+  }
+  .rank-person__copy > small {
+    font-size: 9.5px;
+  }
+  .rank-moment {
+    margin-top: 5px;
+    font-size: 9px;
+  }
+  .rank-points {
+    padding-top: 1px;
+    font-size: 13px;
+  }
+  .achievement-stack__copy {
+    display: inline-flex;
+  }
+}
+@media (max-width: 440px) {
+  .rank-row--achievements .achievement-stack__copy strong {
+    display: inline;
+  }
+  .rank-row--achievements .achievement-stack {
+    padding-right: 8px;
+  }
+}

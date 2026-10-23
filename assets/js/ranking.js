@@ -45,7 +45,7 @@
 
   function achievementMarkup(userId, computed) {
     const badges = computed?.byUser?.[userId] || [];
-    if (!badges.length) return '<div class="achievement-empty">Conquistas aparecem ao longo da temporada.</div>';
+    if (!badges.length) return "";
 
     return `<div class="achievement-row" aria-label="Conquistas">${badges.map(badge => {
       const visibleStack = Math.min(3, Math.max(1, badge.count));
@@ -148,29 +148,49 @@
         Number(other.points || 0) === Number(person.points || 0) &&
         (season.byUser[other.user_id]?.wins || 0) === (phase.wins || 0)
       ).length;
+      const tiedGroupSize = sortedRows.filter(other =>
+        Number(other.points || 0) === Number(person.points || 0) &&
+        (season.byUser[other.user_id]?.wins || 0) === (phase.wins || 0)
+      ).length;
       const position = hasDecidedGames ? (index + 1 - sameScoreBefore) : null;
+      const isTied = tiedGroupSize > 1;
       const uniqueLeader = position === 1 && !topTied;
-      const positionLabel = !position ? "—" : uniqueLeader ? "♛" : position;
+      const positionLabel = !position ? "—" : uniqueLeader ? "♛" : `${position}º`;
+      const tieLabel = position && isTied ? '<span class="rank-tie">EMP.</span>' : "";
 
+      const decidedCount = Number(person.decided_picks || 0);
+      const winCount = Number(phase.wins || 0);
+      const points = Number(person.points || 0);
+      const decidedLabel = `${decidedCount} ${decidedCount === 1 ? "palpite decidido" : "palpites decididos"}`;
+      const winsLabel = `${winCount} ${winCount === 1 ? "vitória" : "vitórias"}`;
+      const pointsLabel = `${points} ${points === 1 ? "pt" : "pts"}`;
+
+      const recentAccuracy = phase.recentTotal
+        ? Math.round((phase.recentCorrect / phase.recentTotal) * 100)
+        : 0;
       const moment = phase.currentStreak >= 2
-        ? `🔥 ${phase.currentStreak} seguidos`
+        ? `🔥 ${phase.currentStreak} acertos seguidos`
         : phase.recentTotal
-          ? `🎯 ${phase.recentCorrect}/${phase.recentTotal} recentes`
+          ? `🎯 ${recentAccuracy}% até agora`
           : "Aguardando primeira rodada decidida";
 
       return `
         <article class="rank-row rank-row--achievements ${uniqueLeader ? "first" : ""} ${isYou ? "is-you" : ""}" data-user-id="${person.user_id}">
-          <div class="rank-position">${positionLabel}${movement}</div>
+          <div class="rank-position-wrap">
+            <div class="rank-position">${positionLabel}</div>
+            ${tieLabel}
+            ${movement}
+          </div>
           <div class="rank-person">
             <div class="avatar">${escapeHtml(initials(name))}</div>
             <div class="rank-person__copy">
               <div class="rank-name">${escapeHtml(name)}${isYou ? " · você" : ""}</div>
-              <small>${Number(person.decided_picks || 0)} palpites decididos · 🏆 ${phase.wins || 0} vitórias</small>
+              <small>${decidedLabel}<span class="rank-meta-dot">·</span>🏆 ${winsLabel}</small>
               <span class="rank-moment">${escapeHtml(moment)}</span>
               ${achievementMarkup(person.user_id, computed)}
             </div>
           </div>
-          <div class="rank-points">${Number(person.points || 0)} pts</div>
+          <div class="rank-points">${pointsLabel}</div>
         </article>`;
     }).join("") || `
       <div class="rank-row">
