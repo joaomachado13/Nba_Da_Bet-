@@ -265,7 +265,7 @@
     const [{ data: games, error: gamesError }, { data: profiles, error: profilesError }] = await Promise.all([
       supabase
         .from("games")
-        .select("id,round_date,start_at,status,away_team_code,away_team_name,home_team_code,home_team_name,away_score,home_score,winner_team_code")
+        .select("id,round_date,start_at,status,away_team_code,away_team_name,home_team_code,home_team_name,away_score,home_score")
         .neq("status", "cancelled")
         .not("round_date", "is", null)
         .order("round_date", { ascending: false })
