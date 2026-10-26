@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#E7A400" />
+  <title>Histórico de rodadas · Bolão NBA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/secondary-pages.css" />
+  <link rel="stylesheet" href="assets/css/history.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar internal-topbar">
+      <button class="back-button" type="button" data-back aria-label="Voltar">
+        <span class="back-button__icon" aria-hidden="true">←</span><span>Voltar</span>
+      </button>
+      <div class="internal-title">
+        <p class="eyebrow">BOLÃO NBA</p>
+        <h1 class="page-title">Histórico</h1>
+      </div>
+      <div class="trophy" aria-hidden="true">◷</div>
+    </header>
+
+    <main class="page-content secondary-page history-page">
+      <section class="secondary-hero history-hero">
+        <span class="section-kicker">RODADAS ANTERIORES</span>
+        <h2>Quem apostou em quem</h2>
+        <p>Volte em qualquer rodada já fechada e confira seu palpite e o de toda a galera jogo por jogo.</p>
+      </section>
+
+      <section class="history-browser" aria-labelledby="historyDateTitle">
+        <div class="history-browser__head">
+          <button class="history-nav-button" id="olderRoundButton" type="button" aria-label="Ver rodada anterior">←</button>
+          <div>
+            <span class="section-kicker">RODADA</span>
+            <h2 id="historyDateTitle">Carregando…</h2>
+            <p id="historyDateMeta">Buscando rodadas fechadas.</p>
+          </div>
+          <button class="history-nav-button" id="newerRoundButton" type="button" aria-label="Ver rodada seguinte">→</button>
+        </div>
+
+        <div class="history-date-strip" id="historyDateStrip" aria-label="Escolher rodada"></div>
+
+        <div class="history-summary" aria-label="Resumo da rodada">
+          <div><span>Jogos</span><strong id="historyGamesCount">—</strong></div>
+          <div><span>Palpites</span><strong id="historyPicksCount">—</strong></div>
+          <div><span>Participantes</span><strong id="historyPlayersCount">—</strong></div>
+        </div>
+      </section>
+
+      <section class="history-games" id="historyGames" aria-live="polite">
+        <div class="history-loading">Carregando histórico…</div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegação principal">
+      <a class="nav-item active" href="index.html"><span>⌂</span><small>Palpites</small></a>
+      <a class="nav-item" href="ranking.html"><span>♕</span><small>Ranking</small></a>
+      <a class="nav-item" href="estatisticas.html"><span>▥</span><small>Estatísticas</small></a>
+      <a class="nav-item" href="mais.html"><span>•••</span><small>Mais</small></a>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="assets/js/navigation.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/teams.js"></script>
+  <script src="assets/js/historico.js"></script>
+</body>
+</html>
