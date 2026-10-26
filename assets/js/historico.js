@@ -220,7 +220,7 @@
     const gameIds = round.games.map(game => String(game.id));
     const { data: predictions, error } = await supabase
       .from("predictions")
-      .select("user_id,game_id,picked_team_code,points")
+      .select("user_id,game_id,picked_team_code")
       .in("game_id", gameIds);
 
     if (error) {
