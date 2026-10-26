@@ -1,0 +1,24 @@
+.pwa-network-status {
+  position: fixed;
+  left: 50%;
+  bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+  z-index: 9999;
+  width: min(calc(100% - 28px), 520px);
+  padding: 11px 14px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 12px;
+  background: #20242D;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0,0,0,.2);
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.4;
+  text-align: center;
+  transform: translateX(-50%);
+}
+.pwa-network-status[hidden] { display: none; }
+
+@media (display-mode: standalone) {
+  body { padding-top: env(safe-area-inset-top, 0px); }
+  .bottom-nav { padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)); }
+}
