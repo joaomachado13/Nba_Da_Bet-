@@ -1,0 +1,23 @@
+{
+  "id": "/",
+  "name": "NBADABET · Bolão NBA",
+  "short_name": "NBADABET",
+  "description": "Bolão privado da NBA com palpites, ranking, estatísticas e histórico de rodadas.",
+  "lang": "pt-BR",
+  "start_url": "/index.html?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#FBF8EF",
+  "theme_color": "#E7A400",
+  "orientation": "portrait-primary",
+  "icons": [
+    {"src":"/assets/icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"/assets/icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ],
+  "shortcuts": [
+    {"name":"Palpites","short_name":"Palpites","url":"/index.html","icons":[{"src":"/assets/icons/icon-192.png","sizes":"192x192","type":"image/png"}]},
+    {"name":"Ranking","short_name":"Ranking","url":"/ranking.html","icons":[{"src":"/assets/icons/icon-192.png","sizes":"192x192","type":"image/png"}]},
+    {"name":"Histórico","short_name":"Histórico","url":"/historico.html","icons":[{"src":"/assets/icons/icon-192.png","sizes":"192x192","type":"image/png"}]}
+  ]
+}
