@@ -1,4 +1,4 @@
-const CACHE_NAME = "nbadabet-shell-v1";
+const CACHE_NAME = "nbadabet-shell-v2";
 const OFFLINE_URL = "/offline.html";
 const APP_SHELL = [
   "/", "/index.html", "/login.html", "/ranking.html", "/estatisticas.html",
