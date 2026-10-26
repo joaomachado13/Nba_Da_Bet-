@@ -1,11 +1,11 @@
-const CACHE_NAME = "nbadabet-shell-v2";
+const CACHE_NAME = "nbadabet-shell-v3";
 const OFFLINE_URL = "/offline.html";
 const APP_SHELL = [
   "/", "/index.html", "/login.html", "/ranking.html", "/estatisticas.html",
   "/mais.html", "/historico.html", OFFLINE_URL, "/manifest.webmanifest",
   "/assets/css/styles.css", "/assets/css/room.css", "/assets/css/secondary-pages.css",
   "/assets/css/history.css", "/assets/css/pwa.css", "/assets/js/pwa.js",
-  "/assets/icons/icon-192.png", "/assets/icons/icon-512.png", "/assets/icons/apple-touch-icon.png"
+  "/assets/icons/icon-192.png", "/assets/icons/nba-logoman.svg", "/assets/icons/apple-touch-icon.png"
 ];
 
 self.addEventListener("install", event => {
