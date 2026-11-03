@@ -174,11 +174,11 @@
     }).length;
     playersCount.textContent = `${correct}/${finalGames.length}`;
     playersCount.parentElement.style.setProperty("--accuracy", `${finalGames.length ? correct * 100 / finalGames.length : 0}%`);
-    newerButton.title = selectedIndex <= 0 ? "Próxima rodada ainda não fechou" : "Ver rodada mais recente";
+    newerButton.title = selectedIndex >= rounds.length - 1 ? "Sem rodada mais recente" : "Ver rodada mais recente";
     newerButton.setAttribute("aria-label", newerButton.title);
 
-    olderButton.disabled = selectedIndex >= rounds.length - 1;
-    newerButton.disabled = selectedIndex <= 0;
+    olderButton.disabled = selectedIndex <= 0;
+    newerButton.disabled = selectedIndex >= rounds.length - 1;
   }
 
   function renderGames(round, predictions) {
@@ -327,15 +327,15 @@
   currentUser = session.user;
 
   olderButton.addEventListener("click", () => {
-    if (selectedIndex < rounds.length - 1) {
-      selectedIndex += 1;
+    if (selectedIndex > 0) {
+      selectedIndex -= 1;
       loadSelectedRound();
     }
   });
 
   newerButton.addEventListener("click", () => {
-    if (selectedIndex > 0) {
-      selectedIndex -= 1;
+    if (selectedIndex < rounds.length - 1) {
+      selectedIndex += 1;
       loadSelectedRound();
     }
   });
@@ -375,7 +375,9 @@
         date,
         games: roundGames.sort((a, b) => new Date(a.start_at) - new Date(b.start_at))
       }))
-      .sort((a, b) => b.date.localeCompare(a.date));
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    selectedIndex = rounds.length - 1;
 
     if (!rounds.length) {
       dateTitle.textContent = "Nenhuma rodada fechada";
