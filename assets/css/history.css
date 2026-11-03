@@ -402,3 +402,48 @@
 .history-hero p{font-size:14px;line-height:1.5}
 .history-browser,.history-game{max-width:100%;min-width:0}
 @media(max-width:600px){.history-page{padding-left:12px!important;padding-right:12px!important}.history-hero{padding:16px!important}.history-hero h2{font-size:22px!important}.history-browser__head{grid-template-columns:38px minmax(0,1fr) 38px}.history-browser__head h2{font-size:16px!important}.history-summary{gap:6px}.history-summary>div{min-width:0;padding:9px 4px}.history-summary span{font-size:9px;letter-spacing:0}}
+
+/* Histórico 2.0 — resultados como foco */
+.history-browser__head h2{text-transform:none!important}
+.history-nav-button:disabled{opacity:.5;background:#f1f1ef;color:#717780;border-color:#dedede}
+.history-date-strip{scrollbar-width:none;overscroll-behavior-x:contain;scroll-snap-type:x proximity;mask-image:linear-gradient(to right,transparent,#000 12px,#000 calc(100% - 12px),transparent)}
+.history-date-strip::-webkit-scrollbar{display:none}
+.history-date-chip{scroll-snap-align:center;min-width:68px}
+.history-date-chip small:first-child{font-size:10px;color:#62656d;margin:0 0 4px}
+.history-date-chip span{font-size:12px}
+.history-game{background:#fff;border:1px solid #e5e5e2;border-left:4px solid #d9d9d6;box-shadow:0 2px 8px rgba(0,0,0,.035)}
+.history-game--correct{border-left-color:#16965a}
+.history-game--wrong{border-left-color:#d94d4d}
+.history-game__head{min-height:0;padding:8px 12px;border-bottom:0;display:flex;gap:8px;justify-content:space-between;color:#646a73;font-size:11px;font-weight:750}
+.history-game__compact{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:6px;padding:6px 12px 8px}
+.history-game__compact-team{font-size:12px;gap:5px}
+.history-game__compact-team.is-loser{color:#838994;font-weight:500}
+.history-game__central-score{display:flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.history-game__central-score strong{font-size:clamp(18px,4.6vw,26px);font-weight:850;color:#242832}
+.history-game__central-score .is-loser{color:#959aa2;font-weight:500}
+.history-game__central-score>span{color:#969ba3;font-size:12px}
+.history-game__central-score small{font-size:11px;color:#525966}
+.history-vote-breakdown{padding:0 12px 10px}
+.history-vote-labels{display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#545b64;margin-bottom:5px}
+.history-vote-bar{height:7px;display:flex;overflow:hidden;border-radius:99px;background:#ececec}
+.history-vote-bar span:first-child{background:#b58817}
+.history-vote-bar span:last-child{background:#626d82}
+.history-my-pick{background:#fff;min-height:0;padding:9px 12px;border-top:1px solid #f0f0ed;align-items:center}
+.history-my-pick>span{font-size:11px;letter-spacing:0;text-transform:none;color:#5c636e}
+.history-my-pick>span strong{font-size:12px;color:#202631}
+.history-result-badge{font-size:11px;font-weight:850;padding:5px 9px;border-radius:999px;white-space:nowrap}
+.history-result-badge.is-correct{background:#e4f7ec;color:#087a45}
+.history-result-badge.is-wrong{background:#ffebeb;color:#b82929}
+.history-game__details{border-top:1px solid #f0f0ed}
+.history-game__details summary{display:flex;align-items:center;gap:8px;padding:9px 12px;list-style:none;font-size:11px;color:#6d530b}
+.history-game__details summary::-webkit-details-marker{display:none}
+.history-game__details summary::after{content:none!important}
+.history-chevron{margin-left:auto;font-size:18px;line-height:1;transition:transform .2s}
+.history-game__details[open] .history-chevron{transform:rotate(180deg)}
+.history-avatars{display:flex;align-items:center;padding-left:4px}
+.history-avatar{display:grid;place-items:center;width:23px;height:23px;margin-left:-4px;border:2px solid white;border-radius:50%;background:#f0e0b4;color:#654600;font-size:8px;font-weight:850}
+.history-game__details .history-matchup{background:#fafaf8}
+.history-team{background:#fff}
+.history-summary>div{background:#fff;border:1px solid #ede8d8}
+.history-summary>div:last-child{background:#fff6df;border-color:#e7c877}
+@media(max-width:600px){.history-game__head{padding:7px 10px}.history-game__compact{padding:6px 10px 8px;gap:4px}.history-game__compact-team{font-size:11px}.history-game__compact-team img{width:28px;height:28px}.history-game__central-score strong{font-size:20px}.history-vote-breakdown{padding:0 10px 8px}.history-my-pick{padding:8px 10px}.history-game__details summary{padding:8px 10px}}
