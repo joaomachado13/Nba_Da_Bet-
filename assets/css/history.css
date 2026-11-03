@@ -382,3 +382,15 @@
     max-width: 68%;
   }
 }
+
+/* Cards compactos no histórico mobile */
+.history-game__details{border-top:1px solid var(--line)}
+.history-game__details summary{cursor:pointer;padding:12px 14px;font-size:13px;font-weight:800;color:#805800}
+.history-game__details .history-matchup{padding-top:0}
+.history-game__compact{display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);gap:8px;align-items:center;padding:12px}
+.history-game__compact-team{display:flex;align-items:center;gap:7px;min-width:0;font-size:13px;font-weight:800}
+.history-game__compact-team:last-child{justify-content:flex-end;text-align:right}
+.history-game__compact-team img{width:32px;height:32px;object-fit:contain;flex-shrink:0}
+.history-game__compact-team span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.history-game__compact-votes{display:flex;justify-content:space-between;padding:0 14px 10px;color:var(--muted);font-size:12px;font-weight:700}
+@media(max-width:600px){.history-page{width:100%;min-width:0;padding-inline:12px!important}.history-browser{padding:12px}.history-browser__head h2{font-size:16px;line-height:1.25}.history-summary span{font-size:10px}.history-games{gap:10px}.history-game__head{min-height:45px;padding:9px 12px}.history-my-pick{min-height:36px;padding:8px 12px}.history-my-pick span,.history-my-pick strong{font-size:11px}.history-game__compact-team{font-size:12px}.history-game__compact-team img{width:29px;height:29px}}
