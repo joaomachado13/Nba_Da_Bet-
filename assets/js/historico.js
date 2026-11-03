@@ -15,6 +15,8 @@
   let profilesById = {};
   let rounds = [];
   let selectedIndex = 0;
+  const predictionsCache = new Map();
+  let requestSequence = 0;
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -185,26 +187,27 @@
       return `
         <article class="history-game">
           <header class="history-game__head">
-            <div>
-              <span>JOGO</span>
-              <strong>${escapeHtml(away.code)} @ ${escapeHtml(home.code)}</strong>
-            </div>
-            <div class="history-game__score">
-              <strong>${escapeHtml(scoreText)}</strong>
-              <span>${status === "final" ? "Final" : escapeHtml(status || "encerrado")}</span>
-            </div>
+            <div><span>JOGO</span><strong>${escapeHtml(away.code)} @ ${escapeHtml(home.code)}</strong></div>
+            <div class="history-game__score"><strong>${escapeHtml(scoreText)}</strong><span>${status === "final" ? "Final" : escapeHtml(status || "encerrado")}</span></div>
           </header>
-
-          <div class="history-matchup">
-            ${teamBlock(away, awayPicks, awayWon, "VISITANTE")}
-            <div class="history-versus">VS</div>
-            ${teamBlock(home, homePicks, homeWon, "CASA")}
+          <div class="history-game__compact">
+            <div class="history-game__compact-team">${away.logo ? `<img src="${escapeHtml(away.logo)}" alt="" loading="lazy">` : ""}<span>${escapeHtml(away.name)}</span></div>
+            <strong aria-hidden="true">×</strong>
+            <div class="history-game__compact-team"><span>${escapeHtml(home.name)}</span>${home.logo ? `<img src="${escapeHtml(home.logo)}" alt="" loading="lazy">` : ""}</div>
           </div>
-
+          <div class="history-game__compact-votes"><span>${awayPicks.length} votos</span><span>${homePicks.length} votos</span></div>
           <footer class="history-my-pick ${myPick ? "" : "is-empty"}">
             <span>Seu palpite</span>
-            <strong>${myPick ? escapeHtml(myPickName) : "Você não registrou palpite neste jogo"}</strong>
+            <strong>${myPick ? escapeHtml(myPickName) : "Não registrado"}${myPick && status === "final" && (awayWon || homeWon) ? (myPick.picked_team_code === (awayWon ? away.code : home.code) ? " · ✓ Acertou" : " · Errou") : ""}</strong>
           </footer>
+          <details class="history-game__details">
+            <summary>Ver quem votou em cada time</summary>
+            <div class="history-matchup">
+              ${teamBlock(away, awayPicks, awayWon, "VISITANTE")}
+              <div class="history-versus">VS</div>
+              ${teamBlock(home, homePicks, homeWon, "CASA")}
+            </div>
+          </details>
         </article>
       `;
     }).join("");
@@ -213,25 +216,29 @@
   async function loadSelectedRound() {
     const round = rounds[selectedIndex];
     if (!round) return;
-
+    const sequence = ++requestSequence;
     renderDateStrip();
+    const cached = predictionsCache.get(round.date);
+    if (cached) {
+      setBrowserState(round, cached);
+      renderGames(round, cached);
+      return;
+    }
     gamesHost.innerHTML = '<div class="history-loading">Carregando palpites da rodada…</div>';
-
-    const gameIds = round.games.map(game => String(game.id));
-    const { data: predictions, error } = await supabase
-      .from("predictions")
+    const { data, error } = await supabase.from("predictions")
       .select("user_id,game_id,picked_team_code")
-      .in("game_id", gameIds);
-
+      .in("game_id", round.games.map(game => String(game.id)));
+    if (sequence !== requestSequence) return;
     if (error) {
       console.error("[Bolão] Histórico de palpites:", error);
       gamesHost.innerHTML = '<div class="history-empty">Não foi possível carregar os palpites desta rodada.</div>';
       showToast("Falha ao carregar a rodada.");
       return;
     }
-
-    setBrowserState(round, predictions || []);
-    renderGames(round, predictions || []);
+    const predictions = data || [];
+    predictionsCache.set(round.date, predictions);
+    setBrowserState(round, predictions);
+    renderGames(round, predictions);
   }
 
   if (!supabase) {
@@ -265,7 +272,7 @@
     const [{ data: games, error: gamesError }, { data: profiles, error: profilesError }] = await Promise.all([
       supabase
         .from("games")
-        .select("id,round_date,start_at,status,away_team_code,away_team_name,home_team_code,home_team_name,away_score,home_score")
+        .select("id,round_date,start_at,status,away_team_code,away_team_name,home_team_code,home_team_name,away_score,home_score,winner_team_code")
         .neq("status", "cancelled")
         .not("round_date", "is", null)
         .order("round_date", { ascending: false })
