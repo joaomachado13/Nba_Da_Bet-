@@ -39,9 +39,14 @@
     const date = new Date(`${key}T12:00:00Z`);
     return new Intl.DateTimeFormat("pt-BR", {
       weekday: "long",
-      day: "2-digit",
+      day: "numeric",
       month: "long"
     }).format(date);
+  }
+
+  function formatWeekday(key) {
+    const value = new Intl.DateTimeFormat("pt-BR", {weekday:"short", timeZone:"UTC"}).format(new Date(`${key}T12:00:00Z`));
+    return value.replace(".", "").replace(/^./, c => c.toUpperCase());
   }
 
   function formatShortDate(key) {
@@ -112,7 +117,7 @@
         data-round-index="${index}"
         aria-pressed="${index === selectedIndex ? "true" : "false"}"
       >
-        <span>${escapeHtml(formatShortDate(round.date))}</span>
+        <small>${escapeHtml(formatWeekday(round.date))}</small><span>${escapeHtml(formatShortDate(round.date))}</span>
         <small>${round.games.length}j</small>
       </button>
     `).join("");
@@ -134,7 +139,15 @@
     dateMeta.textContent = `${round.games.length} ${round.games.length === 1 ? "jogo" : "jogos"} · rodada fechada`;
     gamesCount.textContent = round.games.length;
     picksCount.textContent = picks.length;
-    playersCount.textContent = uniquePlayers.size;
+    const byGame = new Map((picks || []).map(pick => [String(pick.game_id) + ":" + pick.user_id, pick.picked_team_code]));
+    const finalGames = round.games.filter(game => statusIsFinal(game) && Number.isFinite(Number(game.away_score)) && Number.isFinite(Number(game.home_score)) && Number(game.away_score) !== Number(game.home_score));
+    const correct = finalGames.filter(game => {
+      const winner = Number(game.away_score) > Number(game.home_score) ? game.away_team_code : game.home_team_code;
+      return byGame.get(String(game.id) + ":" + currentUser.id) === winner;
+    }).length;
+    playersCount.textContent = `${correct}/${finalGames.length}`;
+    newerButton.title = selectedIndex <= 0 ? "Próxima rodada ainda não fechou" : "Ver rodada mais recente";
+    newerButton.setAttribute("aria-label", newerButton.title);
 
     olderButton.disabled = selectedIndex >= rounds.length - 1;
     newerButton.disabled = selectedIndex <= 0;
@@ -186,24 +199,48 @@
         </section>
       `;
 
+      const final = status === "final";
+      const validResult = final && Number.isFinite(Number(game.away_score)) && Number.isFinite(Number(game.home_score)) && Number(game.away_score) !== Number(game.home_score);
+      const result = myPick && validResult ? (myPick.picked_team_code === (awayWon ? away.code : home.code) ? "correct" : "wrong") : "pending";
+      const totalVotes = awayPicks.length + homePicks.length;
+      const awayPercent = totalVotes ? Math.round(awayPicks.length * 100 / totalVotes) : 50;
+      const homePercent = totalVotes ? 100 - awayPercent : 50;
+      const avatars = gamePicks.slice(0, 5).map(pick => {
+        const name = profilesById[pick.user_id] || "Jogador";
+        const initials = name.trim().split(/\\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase();
+        return `<span class="history-avatar" title="${escapeHtml(name)}">${escapeHtml(initials)}</span>`;
+      }).join("");
       return `
-        <article class="history-game">
+        <article class="history-game history-game--${result}">
           <header class="history-game__head">
-            <div><span>JOGO</span><strong>${escapeHtml(away.code)} @ ${escapeHtml(home.code)}</strong></div>
-            <div class="history-game__score"><strong>${escapeHtml(scoreText)}</strong><span>${status === "final" ? "Final" : escapeHtml(status || "encerrado")}</span></div>
+            <span>${final ? "Final" : escapeHtml(status || "Programado")}</span>
+            <span>${escapeHtml(formatGameTime(game.start_at))}</span>
           </header>
           <div class="history-game__compact">
-            <div class="history-game__compact-team">${away.logo ? `<img src="${escapeHtml(away.logo)}" alt="" loading="lazy">` : ""}<span>${escapeHtml(away.name)}</span></div>
-            <strong aria-hidden="true">×</strong>
-            <div class="history-game__compact-team"><span>${escapeHtml(home.name)}</span>${home.logo ? `<img src="${escapeHtml(home.logo)}" alt="" loading="lazy">` : ""}</div>
+            <div class="history-game__compact-team ${homeWon ? "is-loser" : ""}">
+              ${away.logo ? `<img src="${escapeHtml(away.logo)}" alt="" loading="lazy">` : ""}
+              <span>${escapeHtml(away.name)}</span>
+            </div>
+            <div class="history-game__central-score" aria-label="${escapeHtml(scoreText)}">
+              ${final ? `<strong class="${awayWon ? "is-winner" : "is-loser"}">${escapeHtml(game.away_score ?? "—")}</strong><span>×</span><strong class="${homeWon ? "is-winner" : "is-loser"}">${escapeHtml(game.home_score ?? "—")}</strong>` : `<small>${escapeHtml(formatGameTime(game.start_at))}</small>`}
+            </div>
+            <div class="history-game__compact-team ${awayWon ? "is-loser" : ""}">
+              <span>${escapeHtml(home.name)}</span>
+              ${home.logo ? `<img src="${escapeHtml(home.logo)}" alt="" loading="lazy">` : ""}
+            </div>
           </div>
-          <div class="history-game__compact-votes"><span>${awayPicks.length} votos</span><span>${homePicks.length} votos</span></div>
+          <div class="history-vote-breakdown">
+            <div class="history-vote-labels"><span>${awayPicks.length} · ${awayPercent}%</span><span>${homePercent}% · ${homePicks.length}</span></div>
+            <div class="history-vote-bar" role="img" aria-label="${awayPercent}% dos votos no ${escapeHtml(away.name)} e ${homePercent}% no ${escapeHtml(home.name)}">
+              <span style="width:${awayPercent}%"></span><span style="width:${homePercent}%"></span>
+            </div>
+          </div>
           <footer class="history-my-pick ${myPick ? "" : "is-empty"}">
-            <span>Seu palpite</span>
-            <strong>${myPick ? escapeHtml(myPickName) : "Não registrado"}${myPick && status === "final" && (awayWon || homeWon) ? (myPick.picked_team_code === (awayWon ? away.code : home.code) ? " · ✓ Acertou" : " · Errou") : ""}</strong>
+            <span>Seu palpite: <strong>${myPick ? escapeHtml(myPickName) : "Não registrado"}</strong></span>
+            ${result === "correct" ? '<b class="history-result-badge is-correct">✓ Acertou</b>' : result === "wrong" ? '<b class="history-result-badge is-wrong">✕ Errou</b>' : ""}
           </footer>
           <details class="history-game__details">
-            <summary>Ver quem votou em cada time</summary>
+            <summary><span class="history-avatars">${avatars}</span><span>Ver quem votou</span><span class="history-chevron" aria-hidden="true">⌄</span></summary>
             <div class="history-matchup">
               ${teamBlock(away, awayPicks, awayWon, "VISITANTE")}
               <div class="history-versus">VS</div>
