@@ -47,21 +47,15 @@
     const badges = computed?.byUser?.[userId] || [];
     if (!badges.length) return "";
 
-    return `<div class="achievement-row" aria-label="Conquistas">${badges.map(badge => {
-      const visibleStack = Math.min(3, Math.max(1, badge.count));
-      const pile = Array.from({ length: visibleStack }, (_, index) =>
-        `<i style="--stack-index:${index}">${badge.emoji}</i>`
-      ).join("");
-      return `
-        <button class="achievement-stack" type="button" data-achievement-user="${userId}" data-achievement-key="${badge.key}" aria-label="${escapeHtml(badge.label)}, ${badge.count} vez(es)">
-          <span class="achievement-pile" aria-hidden="true">${pile}</span>
-          <span class="achievement-stack__copy">
-            <strong>${escapeHtml(badge.label)}</strong>
-            ${badge.count > 1 ? `<small>×${badge.count}</small>` : ""}
-          </span>
-          <span class="achievement-tooltip">${escapeHtml(badge.description)}</span>
-        </button>`;
-    }).join("")}</div>`;
+    const badgeButton = badge => `
+      <button class="achievement-stack" type="button" data-achievement-user="${escapeHtml(userId)}" data-achievement-key="${escapeHtml(badge.key)}" title="${escapeHtml(badge.description)}" aria-label="${escapeHtml(badge.label)}, ${badge.count} vez(es)">
+        <span class="achievement-pile" aria-hidden="true"><i>${badge.emoji}</i></span>
+        <span class="achievement-stack__copy"><strong>${escapeHtml(badge.label)}</strong>${badge.count > 1 ? `<small>×${badge.count}</small>` : ""}</span>
+      </button>`;
+    return `<div class="achievement-row" aria-label="Conquistas">
+      ${badges.slice(0,3).map(badgeButton).join("")}
+      ${badges.length > 3 ? `<button class="achievement-more" type="button" aria-expanded="false" aria-label="Mostrar mais ${badges.length - 3} conquistas">+${badges.length - 3}</button><span class="achievement-extra" hidden>${badges.slice(3).map(badgeButton).join("")}</span>` : ""}
+    </div>`;
   }
 
   function openAchievement(userId, key, computed, names) {
@@ -137,6 +131,9 @@
 
     host.innerHTML = sortedRows.map((person, index) => {
       const name = person.display_name || "Jogador";
+      const nameParts = name.trim().split(/\\s+/);
+      const shortName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[1][0]}.` : name;
+      const hue = [...String(person.user_id)].reduce((hash,char) => ((hash * 31 + char.charCodeAt(0)) >>> 0),17) % 360;
       const isYou = person.user_id === currentUserId;
       const phase = season.byUser[person.user_id] || {};
       const move = Number(phase.movement || 0);
@@ -162,7 +159,7 @@
       const winCount = Number(phase.wins || 0);
       const points = Number(person.points || 0);
       const decidedLabel = `${decidedCount} ${decidedCount === 1 ? "palpite decidido" : "palpites decididos"}`;
-      const winsLabel = `${winCount} ${winCount === 1 ? "vitória" : "vitórias"}`;
+      const winsLabel = `${winCount} ${winCount === 1 ? "rodada vencida" : "rodadas vencidas"}`;
       const pointsLabel = `${points} ${points === 1 ? "pt" : "pts"}`;
 
       const recentAccuracy = phase.recentTotal
@@ -174,19 +171,20 @@
           ? `🎯 ${recentAccuracy}% até agora`
           : "Aguardando primeira rodada decidida";
 
+      const accuracy = decidedCount ? Math.round(points / decidedCount * 100) : 0;
+      const leaderGap = topPoints - points;
       return `
-        <article class="rank-row rank-row--achievements ${uniqueLeader ? "first" : ""} ${isYou ? "is-you" : ""}" data-user-id="${person.user_id}">
+        <article class="rank-row rank-row--achievements ${uniqueLeader ? "first" : ""} ${isYou ? "is-you" : ""} ${position && position <= 3 ? `rank-podium rank-podium--${position}` : ""}" data-user-id="${person.user_id}">
           <div class="rank-position-wrap">
-            <div class="rank-position">${positionLabel}</div>
+            <div class="rank-position">${position && position <= 3 && !isTied ? ["🥇","🥈","🥉"][position - 1] : positionLabel}</div>
             ${tieLabel}
-            ${movement}
           </div>
           <div class="rank-person">
-            <div class="avatar">${escapeHtml(initials(name))}</div>
+            <div class="avatar rank-avatar" style="--rank-avatar-hue:${hue}">${escapeHtml(initials(name))}</div>
             <div class="rank-person__copy">
-              <div class="rank-name">${escapeHtml(name)}${isYou ? " · você" : ""}</div>
-              <small>${decidedLabel}<span class="rank-meta-dot">·</span>🏆 ${winsLabel}</small>
-              <span class="rank-moment">${escapeHtml(moment)}</span>
+              <div class="rank-name" title="${escapeHtml(name)}">${escapeHtml(shortName)}${isYou ? " · você" : ""}</div>
+              <small>${decidedLabel}<span class="rank-meta-dot">·</span>🏆 ${winsLabel}<span class="rank-meta-dot">·</span>${accuracy}% de acertos</small>${isTied ? `<small class="rank-tie-explanation">Empate em pontos e rodadas vencidas</small>` : ""}${isYou && leaderGap > 0 ? `<small class="rank-leader-gap">−${leaderGap} pts do líder</small>` : ""}
+
               ${achievementMarkup(person.user_id, computed)}
             </div>
           </div>
@@ -205,6 +203,7 @@
         <div class="rank-points">0 pts</div>
       </div>`;
 
+    host.querySelectorAll(".achievement-more").forEach(button => button.addEventListener("click", () => { const extra = button.nextElementSibling; const opening = extra.hidden; extra.hidden = !opening; button.textContent = opening ? "Menos" : "+" + extra.querySelectorAll(".achievement-stack").length; button.setAttribute("aria-expanded", String(opening)); }));
     host.querySelectorAll("[data-achievement-user]").forEach(button => {
       button.addEventListener("click", () => openAchievement(
         button.dataset.achievementUser,
