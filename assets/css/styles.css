@@ -2335,3 +2335,14 @@ html, body { background: var(--page); }
 .rank-row--achievements .achievement-extra[hidden]{display:none!important}
 .rank-row--achievements .rank-tie{font-size:9px}
 @media(max-width:600px){.rank-row--achievements{grid-template-columns:32px minmax(0,1fr) auto;gap:7px;padding:10px 8px}.rank-row--achievements .rank-person{gap:6px}.rank-row--achievements .rank-avatar{width:31px;height:31px;font-size:11px}.rank-row--achievements .rank-points{font-size:18px!important}.rank-row--achievements .rank-name{font-size:13px}.rank-row--achievements .achievement-stack__copy strong{font-size:9px}}
+
+/* Smooth document-to-document navigation on supported browsers.
+   This preserves each page's own JS initialization and Supabase state. */
+@view-transition { navigation: auto; }
+::view-transition-old(root){animation: .12s ease-out both nba-page-out}
+::view-transition-new(root){animation: .18s ease-out both nba-page-in}
+@keyframes nba-page-out{to{opacity:.85}}
+@keyframes nba-page-in{from{opacity:.85}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){
+::view-transition-old(root),::view-transition-new(root){animation:none!important}
+}
