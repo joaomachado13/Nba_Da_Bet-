@@ -77,6 +77,8 @@
     };
   }
 
+  function statusIsFinal(game) { return String(game.status || "").toLowerCase() === "final"; }
+
   function finalScore(game) {
     const final = String(game.status || "").toLowerCase() === "final";
     if (!final) return "Jogo encerrado? aguardando resultado";
@@ -153,8 +155,8 @@
       const myPick = gamePicks.find(pick => pick.user_id === currentUser.id);
       const away = teamInfo(game.away_team_code, game.away_team_name);
       const home = teamInfo(game.home_team_code, game.home_team_name);
-      const awayWon = game.winner_team_code === game.away_team_code;
-      const homeWon = game.winner_team_code === game.home_team_code;
+      const awayWon = statusIsFinal(game) && Number(game.away_score) > Number(game.home_score);
+      const homeWon = statusIsFinal(game) && Number(game.home_score) > Number(game.away_score);
       const status = String(game.status || "").toLowerCase();
       const scoreText = status === "final"
         ? `${game.away_score ?? "—"} × ${game.home_score ?? "—"}`
@@ -272,7 +274,7 @@
     const [{ data: games, error: gamesError }, { data: profiles, error: profilesError }] = await Promise.all([
       supabase
         .from("games")
-        .select("id,round_date,start_at,status,away_team_code,away_team_name,home_team_code,home_team_name,away_score,home_score,winner_team_code")
+        .select("id,round_date,start_at,status,away_team_code,away_team_name,home_team_code,home_team_name,away_score,home_score")
         .neq("status", "cancelled")
         .not("round_date", "is", null)
         .order("round_date", { ascending: false })
