@@ -2293,3 +2293,19 @@ html, body { background: var(--page); }
   .round-finalize__button { min-height: 52px; font-size: 14px; }
   .round-finalize__warning { padding: 13px; }
 }
+
+/* Home: no-game experience */
+.round-finalize[hidden]{display:none!important}
+.empty-games{width:100%!important;min-width:0!important;max-width:100%!important;display:flex!important;justify-content:center!important;align-items:center!important;text-align:center!important;padding:32px 18px!important;background:#fff!important}
+.empty-games__content{width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.empty-games__icon{font-size:32px;line-height:1.2}
+.empty-games__content strong{font-size:clamp(18px,4vw,23px);line-height:1.25}
+.empty-games__content>span:not(.empty-games__icon){font-size:14px;line-height:1.5;color:#555b66}
+.empty-games__link{display:inline-flex;padding:10px 14px;border-radius:12px;background:#fff6dc;color:#765300;font-size:13px;font-weight:800;text-decoration:none}
+.section-kicker,.round-label,.rule-label{color:#785300}
+.section-subtitle,.round-date-block>span{color:#525966}
+.history-entry-link{font-size:13px!important;font-weight:800!important;min-height:36px;display:inline-flex;align-items:center}
+.rule-icon{display:grid;place-items:center;font-size:19px}
+.round-state{white-space:nowrap}
+@media(min-width:780px){.home-layout:has(.empty-games) .sidebar-stack{display:flex;flex-direction:column}.home-layout:has(.empty-games) .next-round-card{order:-2;border-color:#d8ac31;background:#fff}.home-layout:has(.empty-games) .phase-countdown-card{order:5;opacity:.75}}
+@media(max-width:779px){.home-layout:has(.empty-games) .next-round-card{border-color:#d8ac31;background:#fff}.home-layout:has(.empty-games) .phase-countdown-card{opacity:.75}}
