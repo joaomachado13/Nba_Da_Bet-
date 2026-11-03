@@ -306,6 +306,7 @@
 
     if (!validGames.length) {
       roundFinalizeEl.hidden = true;
+      roundFinalizeButtonEl.disabled = true;
       return;
     }
 
@@ -596,10 +597,12 @@
   function renderGames() {
     if (!games.length) {
       gamesList.innerHTML = `
-        <div class="game-card empty-games">
-          <div>
-            <strong>Nenhum jogo da NBA hoje.</strong>
-            <span>A próxima rodada aparecerá automaticamente.</span>
+        <div class="game-card empty-games" role="status">
+          <div class="empty-games__content">
+            <span class="empty-games__icon" aria-hidden="true">🏀</span>
+            <strong>Nenhum jogo da NBA hoje</strong>
+            <span>Aproveite para conferir o histórico e a próxima rodada.</span>
+            <a href="historico.html" class="empty-games__link">Ver resultados anteriores →</a>
           </div>
         </div>`;
       updateProgress();
@@ -791,8 +794,10 @@
 
   function updateRoundStatus() {
     if (!lockAt) {
-      lockTimeEl.textContent = "--:--";
-      countdownEl.textContent = "Sem rodada para fechar hoje.";
+      lockTimeEl.textContent = "—";
+      countdownEl.textContent = "Confira abaixo a próxima rodada programada.";
+      if (roundStateEl) { roundStateEl.textContent = "SEM RODADA"; roundStateEl.classList.remove("locked"); }
+      if (roundFinalizeEl) roundFinalizeEl.hidden = true;
       return;
     }
 
