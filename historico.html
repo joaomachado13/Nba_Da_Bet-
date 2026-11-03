@@ -24,13 +24,13 @@
   <div class="app-shell">
     <header class="topbar internal-topbar">
       <button class="back-button" type="button" data-back aria-label="Voltar">
-        <span class="back-button__icon" aria-hidden="true">←</span><span>Voltar</span>
+        <span class="back-button__icon" aria-hidden="true">←</span>
       </button>
       <div class="internal-title">
         <p class="eyebrow">BOLÃO NBA</p>
         <h1 class="page-title">Histórico</h1>
       </div>
-      <div class="trophy" aria-hidden="true">◷</div>
+
     </header>
 
     <main class="page-content secondary-page history-page">
@@ -59,6 +59,7 @@
         </div>
       </section>
 
+      <div class="history-mobile-toolbar"><strong id="historyMobileContext">Carregando rodada…</strong><div id="historyGameFilters" class="history-game-filters" role="group" aria-label="Filtrar resultados"><button type="button" data-history-filter="all" aria-pressed="true" class="is-active">Todos</button><button type="button" data-history-filter="correct" aria-pressed="false">Acertei</button><button type="button" data-history-filter="wrong" aria-pressed="false">Errei</button></div></div>
       <section class="history-games" id="historyGames" aria-live="polite">
         <div class="history-loading">Carregando histórico…</div>
       </section>
@@ -67,7 +68,7 @@
     <nav class="bottom-nav" aria-label="Navegação principal">
       <a class="nav-item active" href="index.html"><span>⌂</span><small>Palpites</small></a>
       <a class="nav-item" href="ranking.html"><span>♕</span><small>Ranking</small></a>
-      <a class="nav-item" href="estatisticas.html"><span>▥</span><small>Estatísticas</small></a>
+      <a class="nav-item" href="estatisticas.html"><span class="history-chart-icon"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20V12M10 20V5M16 20V9M22 20V3"/></svg></span><small>Estatísticas</small></a>
       <a class="nav-item" href="mais.html"><span>•••</span><small>Mais</small></a>
     </nav>
   </div>
