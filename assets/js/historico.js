@@ -78,7 +78,8 @@
     return {
       code: String(code || ""),
       name: fallbackName || cfg.name || code || "Time",
-      logo: window.NBA_TEAMS?.logoUrl?.(code) || ""
+      logo: window.NBA_TEAMS?.logoUrl?.(code) || "",
+      color: /^#[0-9a-f]{6}$/i.test(cfg.color || "") ? cfg.color : "#927b43"
     };
   }
 
@@ -130,7 +131,7 @@
     });
 
     const active = dateStrip.querySelector(".history-date-chip.is-active");
-    active?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+    if (active) dateStrip.scrollTo({ left: active.offsetLeft - dateStrip.offsetLeft - (dateStrip.clientWidth - active.offsetWidth) / 2, behavior: "smooth" });
   }
 
   function setBrowserState(round, picks) {
@@ -146,6 +147,7 @@
       return byGame.get(String(game.id) + ":" + currentUser.id) === winner;
     }).length;
     playersCount.textContent = `${correct}/${finalGames.length}`;
+    playersCount.parentElement.style.setProperty("--accuracy", `${finalGames.length ? correct * 100 / finalGames.length : 0}%`);
     newerButton.title = selectedIndex <= 0 ? "Próxima rodada ainda não fechou" : "Ver rodada mais recente";
     newerButton.setAttribute("aria-label", newerButton.title);
 
@@ -201,14 +203,16 @@
 
       const final = status === "final";
       const validResult = final && Number.isFinite(Number(game.away_score)) && Number.isFinite(Number(game.home_score)) && Number(game.away_score) !== Number(game.home_score);
-      const result = myPick && validResult ? (myPick.picked_team_code === (awayWon ? away.code : home.code) ? "correct" : "wrong") : "pending";
+      const result = !myPick ? "missing" : validResult ? (myPick.picked_team_code === (awayWon ? away.code : home.code) ? "correct" : "wrong") : "pending";
       const totalVotes = awayPicks.length + homePicks.length;
       const awayPercent = totalVotes ? Math.round(awayPicks.length * 100 / totalVotes) : 50;
       const homePercent = totalVotes ? 100 - awayPercent : 50;
       const avatars = gamePicks.slice(0, 5).map(pick => {
         const name = profilesById[pick.user_id] || "Jogador";
         const initials = name.trim().split(/\\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase();
-        return `<span class="history-avatar" title="${escapeHtml(name)}">${escapeHtml(initials)}</span>`;
+        const hue = [...String(pick.user_id)].reduce((hash, char) => ((hash * 31 + char.charCodeAt(0)) >>> 0), 17) % 360;
+        const avatarResult = validResult ? (pick.picked_team_code === (awayWon ? away.code : home.code) ? "correct" : "wrong") : "pending";
+        return `<span class="history-avatar history-avatar--${avatarResult}" style="--avatar-hue:${hue}" title="${escapeHtml(name)}">${escapeHtml(initials)}</span>`;
       }).join("");
       return `
         <article class="history-game history-game--${result}">
@@ -217,27 +221,27 @@
             <span>${escapeHtml(formatGameTime(game.start_at))}</span>
           </header>
           <div class="history-game__compact">
-            <div class="history-game__compact-team ${homeWon ? "is-loser" : ""}">
+            <div class="history-game__compact-team ${awayWon ? "is-winner" : homeWon ? "is-loser" : ""}">
               ${away.logo ? `<img src="${escapeHtml(away.logo)}" alt="" loading="lazy">` : ""}
               <span>${escapeHtml(away.name)}</span>
             </div>
             <div class="history-game__central-score" aria-label="${escapeHtml(scoreText)}">
               ${final ? `<strong class="${awayWon ? "is-winner" : "is-loser"}">${escapeHtml(game.away_score ?? "—")}</strong><span>×</span><strong class="${homeWon ? "is-winner" : "is-loser"}">${escapeHtml(game.home_score ?? "—")}</strong>` : `<small>${escapeHtml(formatGameTime(game.start_at))}</small>`}
             </div>
-            <div class="history-game__compact-team ${awayWon ? "is-loser" : ""}">
+            <div class="history-game__compact-team ${homeWon ? "is-winner" : awayWon ? "is-loser" : ""}">
               <span>${escapeHtml(home.name)}</span>
               ${home.logo ? `<img src="${escapeHtml(home.logo)}" alt="" loading="lazy">` : ""}
             </div>
           </div>
           <div class="history-vote-breakdown">
-            <div class="history-vote-labels"><span>${awayPicks.length} · ${awayPercent}%</span><span>${homePercent}% · ${homePicks.length}</span></div>
-            <div class="history-vote-bar" role="img" aria-label="${awayPercent}% dos votos no ${escapeHtml(away.name)} e ${homePercent}% no ${escapeHtml(home.name)}">
+            <div class="history-vote-labels"><span><i style="background:${escapeHtml(away.color)}"></i>${escapeHtml(away.code)} · <strong>${awayPicks.length}</strong> · ${awayPercent}%</span><span>${homePercent}% · <strong>${homePicks.length}</strong> · ${escapeHtml(home.code)}<i style="background:${escapeHtml(home.color)}"></i></span></div>
+            <div class="history-vote-bar" style="--away-vote-color:${escapeHtml(away.color)};--home-vote-color:${escapeHtml(home.color)}" role="img" aria-label="${awayPercent}% dos votos no ${escapeHtml(away.name)} e ${homePercent}% no ${escapeHtml(home.name)}">
               <span style="width:${awayPercent}%"></span><span style="width:${homePercent}%"></span>
             </div>
           </div>
-          <footer class="history-my-pick ${myPick ? "" : "is-empty"}">
+          <div class="history-game__bottom"><footer class="history-my-pick ${myPick ? "" : "is-empty"}">
             <span>Seu palpite: <strong>${myPick ? escapeHtml(myPickName) : "Não registrado"}</strong></span>
-            ${result === "correct" ? '<b class="history-result-badge is-correct">✓ Acertou</b>' : result === "wrong" ? '<b class="history-result-badge is-wrong">✕ Errou</b>' : ""}
+            ${result === "correct" ? '<b class="history-result-badge is-correct">✓ Acertou</b>' : result === "wrong" ? '<b class="history-result-badge is-wrong">✕ Errou</b>' : result === "missing" ? '<b class="history-result-badge is-missing">Sem palpite</b>' : ""}
           </footer>
           <details class="history-game__details">
             <summary><span class="history-avatars">${avatars}</span><span>Ver quem votou</span><span class="history-chevron" aria-hidden="true">⌄</span></summary>
