@@ -514,3 +514,29 @@
 .history-game__details .history-team{padding:9px}
 .history-game__details .history-voters{margin-top:7px}
 @media(max-width:600px){.history-game__bottom .history-my-pick{padding:8px 10px}.history-game__bottom .history-game__details summary{padding:7px 10px}.history-game__bottom .history-avatars .history-avatar:nth-child(n+4){display:grid}}
+
+/* Single accessible, full-width result row and expanded panel */
+.history-game__details--full{display:block!important;width:100%;border:0;border-top:1px solid #ededed}
+.history-game__details--full>summary{display:flex!important;align-items:center;gap:8px;min-height:48px;padding:5px 10px!important;cursor:pointer;list-style:none}
+.history-game__details--full>summary::-webkit-details-marker{display:none}
+.history-game__details--full>summary .history-my-pick{display:flex;align-items:center;flex:1 1 auto;min-width:0;width:auto;padding:0!important;border:0;gap:5px;background:transparent}
+.history-game__details--full>summary .history-my-pick>span{display:flex;flex-wrap:wrap;gap:3px;align-items:baseline;min-width:0;overflow-wrap:anywhere}
+.history-game__details--full>summary .history-my-pick strong{max-width:none;text-align:left}
+.history-game__details--full>summary .history-result-badge{flex:none}
+.history-game__details--full>summary .history-avatars{flex:none;margin-left:auto;padding:0 5px 0 0}
+.history-game__details--full>summary .history-chevron{flex:none;margin-left:0;font-size:21px}
+.history-game__details--full>.history-matchup{display:grid!important;width:100%!important;box-sizing:border-box;border-top:1px solid #eee;padding:10px}
+.history-game__details--full[open] .history-chevron{transform:rotate(180deg)}
+.history-avatar{overflow:visible;width:26px;height:26px;flex:0 0 26px}
+.history-avatar em{width:14px!important;height:14px!important;right:-5px!important;bottom:-5px!important;border:2px solid white!important;font-size:9px!important;line-height:1;box-sizing:border-box;z-index:1}
+.history-game__compact-team.is-loser{color:#626b77!important}
+.history-game__central-score .is-loser{color:#626b77!important}
+.history-game__compact-team img{width:40px!important;height:40px!important;object-fit:contain;object-position:center}
+.history-game__compact-team{min-width:0}
+@media(max-width:600px){
+.history-game__details--full>summary{gap:5px;padding:5px 8px!important}
+.history-game__details--full>summary .history-my-pick{gap:4px}
+.history-game__details--full>summary .history-avatars .history-avatar:nth-child(n+4){display:none}
+.history-game__compact-team img{width:36px!important;height:36px!important}
+.history-game__details--full>summary .history-result-badge{font-size:10px}
+}
