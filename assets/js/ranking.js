@@ -7,7 +7,7 @@
   const supabase = window.APP_SUPABASE;
 
   function initials(name) {
-    return String(name || "Jogador").trim().split(/\s+/).slice(0, 2).map(part => part[0] || "").join("").toUpperCase();
+    return String(name || "Jogador").trim().slice(0, 2).toUpperCase();
   }
 
   function escapeHtml(value) {
@@ -47,14 +47,22 @@
     const badges = computed?.byUser?.[userId] || [];
     if (!badges.length) return "";
 
+    const frequency = {};
+    for (const userBadges of Object.values(computed?.byUser || {})) {
+      for (const badge of userBadges) frequency[badge.key] = (frequency[badge.key] || 0) + 1;
+    }
+    const orderedBadges = [...badges].sort((a,b) =>
+      (frequency[a.key] || 0) - (frequency[b.key] || 0) ||
+      new Date(b.events?.at(-1)?.sort_at || b.events?.at(-1)?.round_date || 0) - new Date(a.events?.at(-1)?.sort_at || a.events?.at(-1)?.round_date || 0)
+    );
     const badgeButton = badge => `
       <button class="achievement-stack" type="button" data-achievement-user="${escapeHtml(userId)}" data-achievement-key="${escapeHtml(badge.key)}" title="${escapeHtml(badge.description)}" aria-label="${escapeHtml(badge.label)}, ${badge.count} vez(es)">
         <span class="achievement-pile" aria-hidden="true"><i>${badge.emoji}</i></span>
         <span class="achievement-stack__copy"><strong>${escapeHtml(badge.label)}</strong>${badge.count > 1 ? `<small>×${badge.count}</small>` : ""}</span>
       </button>`;
     return `<div class="achievement-row" aria-label="Conquistas">
-      ${badges.slice(0,3).map(badgeButton).join("")}
-      ${badges.length > 3 ? `<button class="achievement-more" type="button" aria-expanded="false" aria-label="Mostrar mais ${badges.length - 3} conquistas">+${badges.length - 3}</button><span class="achievement-extra" hidden>${badges.slice(3).map(badgeButton).join("")}</span>` : ""}
+      ${orderedBadges.slice(0,3).map(badgeButton).join("")}
+      ${orderedBadges.length > 3 ? `<button class="achievement-more" type="button" aria-expanded="false" aria-label="Mostrar mais ${orderedBadges.length - 3} conquistas">+${orderedBadges.length - 3}</button><span class="achievement-extra" hidden>${orderedBadges.slice(3).map(badgeButton).join("")}</span>` : ""}
     </div>`;
   }
 
@@ -118,7 +126,10 @@
       const p = Number(b.points || 0) - Number(a.points || 0);
       if (p) return p;
       const w = (season.byUser[b.user_id]?.wins || 0) - (season.byUser[a.user_id]?.wins || 0);
-      return w || String(a.display_name || "").localeCompare(String(b.display_name || ""), "pt-BR");
+      if (w) return w;
+      const aRate = Number(a.decided_picks || 0) ? Number(a.points || 0) / Number(a.decided_picks) : 0;
+      const bRate = Number(b.decided_picks || 0) ? Number(b.points || 0) / Number(b.decided_picks) : 0;
+      return bRate - aRate || String(a.display_name || "").localeCompare(String(b.display_name || ""), "pt-BR");
     });
 
     const hasDecidedGames = sortedRows.some(person => Number(person.decided_picks || 0) > 0);
@@ -126,12 +137,12 @@
     const topWins = season.byUser[sortedRows[0]?.user_id]?.wins || 0;
     const topTied = sortedRows.filter(person =>
       Number(person.points || 0) === topPoints &&
-      (season.byUser[person.user_id]?.wins || 0) === topWins
+      (season.byUser[person.user_id]?.wins || 0) === topWins && Number(person.points || 0) * Number(sortedRows[0]?.decided_picks || 0) === topPoints * Number(person.decided_picks || 0)
     ).length > 1;
 
     host.innerHTML = sortedRows.map((person, index) => {
       const name = person.display_name || "Jogador";
-      const nameParts = name.trim().split(/\\s+/);
+      const nameParts = name.trim().split(/\s+/);
       const shortName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[1][0]}.` : name;
       const hue = [...String(person.user_id)].reduce((hash,char) => ((hash * 31 + char.charCodeAt(0)) >>> 0),17) % 360;
       const isYou = person.user_id === currentUserId;
@@ -143,7 +154,7 @@
 
       const sameScoreBefore = sortedRows.slice(0, index).filter(other =>
         Number(other.points || 0) === Number(person.points || 0) &&
-        (season.byUser[other.user_id]?.wins || 0) === (phase.wins || 0)
+        (season.byUser[other.user_id]?.wins || 0) === (phase.wins || 0) && Number(other.points || 0) * Number(person.decided_picks || 0) === Number(person.points || 0) * Number(other.decided_picks || 0)
       ).length;
       const tiedGroupSize = sortedRows.filter(other =>
         Number(other.points || 0) === Number(person.points || 0) &&
@@ -152,13 +163,13 @@
       const position = hasDecidedGames ? (index + 1 - sameScoreBefore) : null;
       const isTied = tiedGroupSize > 1;
       const uniqueLeader = position === 1 && !topTied;
-      const positionLabel = !position ? "—" : uniqueLeader ? "♛" : `${position}º`;
-      const tieLabel = position && isTied ? '<span class="rank-tie">EMP.</span>' : "";
+      const positionLabel = !position ? "—" : `${position}º`;
+      const tieLabel = position && isTied ? '<span class="rank-tie" title="Empate em pontos, rodadas vencidas e aproveitamento">EMP.</span>' : "";
 
       const decidedCount = Number(person.decided_picks || 0);
       const winCount = Number(phase.wins || 0);
       const points = Number(person.points || 0);
-      const decidedLabel = `${decidedCount} ${decidedCount === 1 ? "palpite decidido" : "palpites decididos"}`;
+      
       const winsLabel = `${winCount} ${winCount === 1 ? "rodada vencida" : "rodadas vencidas"}`;
       const pointsLabel = `${points} ${points === 1 ? "pt" : "pts"}`;
 
@@ -178,17 +189,18 @@
           <div class="rank-position-wrap">
             <div class="rank-position">${position && position <= 3 && !isTied ? ["🥇","🥈","🥉"][position - 1] : positionLabel}</div>
             ${tieLabel}
+            ${move !== 0 ? movement : ""}
           </div>
           <div class="rank-person">
             <div class="avatar rank-avatar" style="--rank-avatar-hue:${hue}">${escapeHtml(initials(name))}</div>
             <div class="rank-person__copy">
               <div class="rank-name" title="${escapeHtml(name)}">${escapeHtml(shortName)}${isYou ? " · você" : ""}</div>
-              <small>${decidedLabel}<span class="rank-meta-dot">·</span>🏆 ${winsLabel}<span class="rank-meta-dot">·</span>${accuracy}% de acertos</small>${isTied ? `<small class="rank-tie-explanation">Empate em pontos e rodadas vencidas</small>` : ""}${isYou && leaderGap > 0 ? `<small class="rank-leader-gap">−${leaderGap} pts do líder</small>` : ""}
+              <small>${winCount > 0 ? `🏆 ${winsLabel}<span class="rank-meta-dot">·</span>` : ""}${accuracy}% de acertos <span title="${decidedCount} palpites decididos">(${points}/${decidedCount})</span></small>
 
               ${achievementMarkup(person.user_id, computed)}
             </div>
           </div>
-          <div class="rank-points">${pointsLabel}</div>
+          <div class="rank-points">${pointsLabel}${isYou && leaderGap > 0 ? `<small class="rank-leader-gap">−${leaderGap} pts do líder</small>` : ""}</div>
         </article>`;
     }).join("") || `
       <div class="rank-row">
