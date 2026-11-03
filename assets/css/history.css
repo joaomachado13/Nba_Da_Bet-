@@ -540,3 +540,30 @@
 .history-game__compact-team img{width:36px!important;height:36px!important}
 .history-game__details--full>summary .history-result-badge{font-size:10px}
 }
+
+/* Date navigation: independently scrollable without visible scrollbar */
+.history-strip-shell{position:relative;min-width:0;margin-top:14px}
+.history-date-strip{display:flex!important;flex-wrap:nowrap!important;gap:7px;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important;scroll-snap-type:x proximity;mask-image:none!important;margin-top:0!important;padding:5px 2px 7px;touch-action:pan-x;user-select:none}
+.history-date-strip::-webkit-scrollbar{display:none!important}
+.history-date-chip{flex:0 0 auto!important;flex-shrink:0!important;white-space:nowrap}
+.history-date-chip.is-active{background:#fff0b8!important;border:1.5px solid #d79b00!important;box-shadow:0 0 0 1px #e9bd4b!important}
+.history-month-label{color:#755300!important;font-size:9px!important;font-weight:850!important;text-transform:capitalize;margin:0 0 2px!important}
+.history-strip-shell::before,.history-strip-shell::after{content:"";position:absolute;top:0;bottom:0;width:19px;pointer-events:none;z-index:2;opacity:0;transition:opacity .15s}
+.history-strip-shell::before{left:0;background:linear-gradient(90deg,#fff,transparent)}
+.history-strip-shell::after{right:0;background:linear-gradient(270deg,#fff,transparent)}
+.history-strip-shell.can-scroll-left::before,.history-strip-shell.can-scroll-right::after{opacity:1}
+.history-strip-arrow{display:none}
+@media(min-width:700px){
+.history-strip-shell{padding:0 29px}
+.history-strip-arrow{display:grid;place-items:center;position:absolute;top:50%;transform:translateY(-50%);width:25px;height:38px;border:1px solid #e2d7bc;border-radius:8px;background:#fff;color:#765300;font-size:23px;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .15s}
+.history-strip-arrow--left{left:0}
+.history-strip-arrow--right{right:0}
+.history-strip-shell.can-scroll-left .history-strip-arrow--left,.history-strip-shell.can-scroll-right .history-strip-arrow--right{opacity:1;pointer-events:auto}
+.history-strip-shell::before{left:29px}
+.history-strip-shell::after{right:29px}
+}
+.history-browser__head p{color:#636a73!important}
+.history-summary>div:last-child{position:relative;background:#fff9e8!important;border-color:#e6c77d;padding-bottom:16px}
+.history-summary>div:last-child strong{color:#3a3020!important;font-size:24px}
+.history-summary>div:last-child::after{content:"";position:absolute;left:10px;right:10px;bottom:7px;height:4px;border-radius:8px;background:linear-gradient(to right,#c89b27 var(--accuracy),#e8e5dc var(--accuracy))}
+.history-nav-button:disabled{opacity:1!important;background:#f6f6f5!important;color:#b0b4ba!important;border-color:#ececec!important;cursor:not-allowed}
