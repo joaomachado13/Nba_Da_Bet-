@@ -17,6 +17,27 @@
   let selectedIndex = 0;
   const predictionsCache = new Map();
   let requestSequence = 0;
+  let dateDrag = null;
+  let ignoreDateClick = false;
+  dateStrip?.addEventListener("wheel", event => {
+    if (dateStrip.scrollWidth <= dateStrip.clientWidth || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    const max = dateStrip.scrollWidth - dateStrip.clientWidth;
+    const next = Math.max(0, Math.min(max, dateStrip.scrollLeft + event.deltaY));
+    if (Math.abs(next - dateStrip.scrollLeft) > .5) { event.preventDefault(); dateStrip.scrollLeft = next; }
+  }, { passive: false });
+  dateStrip?.addEventListener("pointerdown", event => {
+    if (event.pointerType === "mouse" && event.button === 0) dateDrag = { x: event.clientX, scroll: dateStrip.scrollLeft, moved: false };
+  });
+  dateStrip?.addEventListener("pointermove", event => {
+    if (!dateDrag) return;
+    const dx = event.clientX - dateDrag.x;
+    if (Math.abs(dx) > 5) { dateDrag.moved = true; dateStrip.scrollLeft = dateDrag.scroll - dx; }
+  });
+  dateStrip?.addEventListener("pointerup", () => {
+    if (dateDrag?.moved) { ignoreDateClick = true; setTimeout(() => { ignoreDateClick = false; }, 0); }
+    dateDrag = null;
+  });
+  dateStrip?.addEventListener("pointercancel", () => { dateDrag = null; });
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -123,12 +144,13 @@
         aria-pressed="${index === selectedIndex ? "true" : "false"}"
       >
         <small>${escapeHtml(formatWeekday(round.date))}</small><span>${escapeHtml(formatShortDate(round.date))}</span>
-        <small>${round.games.length}j</small>
+        <small class="history-date-chip__games">${round.games.length} ${round.games.length === 1 ? "jogo" : "jogos"}</small>
       </button>
     `).join("");
 
     dateStrip.querySelectorAll("[data-round-index]").forEach(button => {
       button.addEventListener("click", () => {
+        if (ignoreDateClick) return;
         selectedIndex = Number(button.dataset.roundIndex);
         loadSelectedRound();
       });
