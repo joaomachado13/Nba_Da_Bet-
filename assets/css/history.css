@@ -602,3 +602,6 @@
 .history-game__head{font-size:10px}
 .history-mobile-toolbar{top:0}
 }
+
+body:has(.history-page) .bottom-nav{background:#fff!important}
+@media(display-mode:standalone){body:has(.history-page){background-color:#fff}body:has(.history-page) .bottom-nav{padding-bottom:max(8px,env(safe-area-inset-bottom,0px));background:#fff!important}}
