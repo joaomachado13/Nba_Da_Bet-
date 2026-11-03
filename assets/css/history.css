@@ -487,3 +487,30 @@
 .history-game__bottom .history-my-pick>span{font-size:10px}
 .history-result-badge{font-size:10px;padding:4px 6px}
 }
+
+/* Fix expanded game layout: row and details must never share a flex line */
+.history-game__bottom{display:flex!important;flex-direction:column!important;align-items:stretch!important;min-width:0;width:100%}
+.history-game__bottom .history-my-pick{width:100%;min-width:0;flex:none;display:flex;flex-wrap:wrap;justify-content:space-between;gap:7px}
+.history-game__bottom .history-my-pick>span{min-width:0;flex:1 1 145px;overflow-wrap:anywhere}
+.history-game__bottom .history-result-badge{flex:none}
+.history-game__bottom .history-game__details{display:block!important;width:100%;min-width:0;border-left:0!important;border-top:1px solid #eee}
+.history-game__bottom .history-game__details summary{display:flex;min-height:36px;justify-content:flex-start}
+.history-game__bottom .history-game__details .history-matchup{display:grid;width:100%;position:static;box-sizing:border-box}
+.history-game__bottom:has(.history-game__details[open]){display:flex!important;flex-wrap:nowrap!important}
+.history-game__bottom:has(.history-game__details[open]) .history-game__details{display:block!important}
+.history-game__bottom:has(.history-game__details[open]) .history-game__details .history-matchup{width:100%;flex:none}
+.history-avatar{position:relative;border:2px solid white!important}
+.history-avatar em{position:absolute;right:-4px;bottom:-4px;display:grid;place-items:center;width:11px;height:11px;border-radius:50%;font-size:8px;font-style:normal;font-weight:900;color:#fff;background:#999}
+.history-avatar--correct em{background:#12864e}
+.history-avatar--wrong em{background:#c73939}
+.history-vote-bar{gap:2px;background:#fff}
+.history-vote-bar span{min-width:0}
+.history-vote-bar span:first-child{border-radius:8px 0 0 8px}
+.history-vote-bar span:last-child{border-radius:0 8px 8px 0}
+.history-team__head{align-items:center}
+.history-team__identity{flex:1}
+.history-team__identity strong{font-size:13px}
+.history-team.is-winner{background:#fff}
+.history-game__details .history-team{padding:9px}
+.history-game__details .history-voters{margin-top:7px}
+@media(max-width:600px){.history-game__bottom .history-my-pick{padding:8px 10px}.history-game__bottom .history-game__details summary{padding:7px 10px}.history-game__bottom .history-avatars .history-avatar:nth-child(n+4){display:grid}}
