@@ -2309,3 +2309,29 @@ html, body { background: var(--page); }
 .round-state{white-space:nowrap}
 @media(min-width:780px){.home-layout:has(.empty-games) .sidebar-stack{display:flex;flex-direction:column}.home-layout:has(.empty-games) .next-round-card{order:-2;border-color:#d8ac31;background:#fff}.home-layout:has(.empty-games) .phase-countdown-card{order:5;opacity:.75}}
 @media(max-width:779px){.home-layout:has(.empty-games) .next-round-card{border-color:#d8ac31;background:#fff}.home-layout:has(.empty-games) .phase-countdown-card{opacity:.75}}
+
+/* Ranking: compact and legible */
+.rank-row--achievements{padding:12px 14px;align-items:start}
+.rank-row--achievements.is-you{background:#fff7df!important;border-left:4px solid #d6a019!important}
+.rank-row--achievements.rank-podium--1:not(.is-you){background:#fffaf0}
+.rank-row--achievements.rank-podium--2:not(.is-you){background:#fafbfc}
+.rank-row--achievements.rank-podium--3:not(.is-you){background:#fff9f4}
+.rank-row--achievements .rank-points{font-size:21px!important;font-weight:900;white-space:nowrap;text-align:right;letter-spacing:-.04em}
+.rank-row--achievements .rank-position{font-size:17px;background:#f1f3f5}
+.rank-row--achievements .rank-avatar{background:hsl(var(--rank-avatar-hue) 55% 85%);color:hsl(var(--rank-avatar-hue) 60% 25%);flex:none}
+.rank-row--achievements .rank-person__copy{min-width:0}
+.rank-row--achievements .rank-name{font-size:15px;font-weight:850}
+.rank-row--achievements .rank-person__copy>small{display:block;color:#555d67;font-size:11px;line-height:1.4}
+.rank-row--achievements .rank-tie-explanation{font-size:10px;color:#746026}
+.rank-row--achievements .rank-leader-gap{font-weight:850;color:#956400}
+.rank-row--achievements .rank-moment{display:none}
+.rank-row--achievements .achievement-row{gap:5px;margin-top:7px;align-items:center}
+.rank-row--achievements .achievement-stack{min-height:29px;gap:5px;padding:3px 8px}
+.rank-row--achievements .achievement-pile{min-width:19px;height:19px}
+.rank-row--achievements .achievement-pile i{width:19px;height:19px;margin:0!important;font-size:12px}
+.rank-row--achievements .achievement-stack__copy strong{font-size:10px}
+.rank-row--achievements .achievement-more{border:1px solid #dfbe66;border-radius:999px;background:#fff7dd;color:#755200;min-height:29px;padding:4px 10px;font-weight:850;font-size:11px;cursor:pointer}
+.rank-row--achievements .achievement-extra:not([hidden]){display:contents}
+.rank-row--achievements .achievement-extra[hidden]{display:none!important}
+.rank-row--achievements .rank-tie{font-size:9px}
+@media(max-width:600px){.rank-row--achievements{grid-template-columns:32px minmax(0,1fr) auto;gap:7px;padding:10px 8px}.rank-row--achievements .rank-person{gap:6px}.rank-row--achievements .rank-avatar{width:31px;height:31px;font-size:11px}.rank-row--achievements .rank-points{font-size:18px!important}.rank-row--achievements .rank-name{font-size:13px}.rank-row--achievements .achievement-stack__copy strong{font-size:9px}}
