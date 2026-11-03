@@ -2,9 +2,6 @@
   const supabase = window.APP_SUPABASE;
   const gamesHost = document.getElementById("historyGames");
   const dateStrip = document.getElementById("historyDateStrip");
-  const stripShell = document.getElementById("historyStripShell");
-  const stripLeft = document.getElementById("historyStripLeft");
-  const stripRight = document.getElementById("historyStripRight");
   const olderButton = document.getElementById("olderRoundButton");
   const newerButton = document.getElementById("newerRoundButton");
   const dateTitle = document.getElementById("historyDateTitle");
@@ -20,48 +17,6 @@
   let selectedIndex = 0;
   const predictionsCache = new Map();
   let requestSequence = 0;
-  let suppressChipClick = false;
-  let pointerDrag = null;
-  function updateStripEdges() {
-    if (!dateStrip || !stripShell) return;
-    const max = Math.max(0, dateStrip.scrollWidth - dateStrip.clientWidth);
-    stripShell.classList.toggle("can-scroll-left", dateStrip.scrollLeft > 3);
-    stripShell.classList.toggle("can-scroll-right", dateStrip.scrollLeft < max - 3);
-  }
-  function centerSelectedChip() {
-    const active = dateStrip?.querySelector(".history-date-chip.is-active");
-    if (!active) return;
-    const target = active.offsetLeft - dateStrip.offsetLeft - (dateStrip.clientWidth - active.offsetWidth) / 2;
-    dateStrip.scrollTo({left: Math.max(0, target), behavior:"smooth"});
-    requestAnimationFrame(updateStripEdges);
-  }
-  dateStrip?.addEventListener("scroll", updateStripEdges, {passive:true});
-  window.addEventListener("resize", updateStripEdges);
-  dateStrip?.addEventListener("wheel", event => {
-    if (Math.abs(event.deltaY) > Math.abs(event.deltaX) && dateStrip.scrollWidth > dateStrip.clientWidth) {
-      const max = dateStrip.scrollWidth - dateStrip.clientWidth;
-      const next = Math.max(0, Math.min(max, dateStrip.scrollLeft + event.deltaY));
-      if (Math.abs(next - dateStrip.scrollLeft) > .5) {event.preventDefault();dateStrip.scrollLeft = next;}
-    }
-  }, {passive:false});
-  dateStrip?.addEventListener("pointerdown", event => {
-    if (event.pointerType === "mouse" && event.button === 0) pointerDrag = {id:event.pointerId,x:event.clientX,start:dateStrip.scrollLeft,moved:false};
-  });
-  dateStrip?.addEventListener("pointermove", event => {
-    if (!pointerDrag || pointerDrag.id !== event.pointerId) return;
-    const dx = event.clientX - pointerDrag.x;
-    if (Math.abs(dx) > 5) {pointerDrag.moved = true;dateStrip.scrollLeft = pointerDrag.start - dx;}
-  });
-  dateStrip?.addEventListener("pointerup", event => {
-    if (pointerDrag?.id !== event.pointerId) return;
-    if (pointerDrag.moved) {suppressChipClick = true;setTimeout(() => {suppressChipClick = false;}, 0);}
-    pointerDrag = null;
-  });
-  dateStrip?.addEventListener("pointercancel", () => {pointerDrag = null;});
-  for (const [button, direction] of [[stripLeft,-1],[stripRight,1]]) {
-    button?.addEventListener("click", () => dateStrip.scrollBy({left:direction * dateStrip.clientWidth * .7,behavior:"smooth"}));
-  }
-
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -160,7 +115,6 @@
   function renderDateStrip() {
     if (!dateStrip) return;
 
-    const previousScroll = dateStrip.scrollLeft;
     dateStrip.innerHTML = rounds.map((round, index) => `
       <button
         type="button"
@@ -168,7 +122,6 @@
         data-round-index="${index}"
         aria-pressed="${index === selectedIndex ? "true" : "false"}"
       >
-        ${index === 0 || round.date.slice(0,7) !== rounds[index - 1].date.slice(0,7) ? `<small class="history-month-label">${escapeHtml(new Intl.DateTimeFormat("pt-BR",{month:"short",timeZone:"UTC"}).format(new Date(round.date + "T12:00:00Z")))}</small>` : ""}
         <small>${escapeHtml(formatWeekday(round.date))}</small><span>${escapeHtml(formatShortDate(round.date))}</span>
         <small>${round.games.length}j</small>
       </button>
@@ -176,14 +129,13 @@
 
     dateStrip.querySelectorAll("[data-round-index]").forEach(button => {
       button.addEventListener("click", () => {
-        if (suppressChipClick) return;
         selectedIndex = Number(button.dataset.roundIndex);
         loadSelectedRound();
       });
     });
 
-    dateStrip.scrollLeft = previousScroll;
-    requestAnimationFrame(centerSelectedChip);
+    const active = dateStrip.querySelector(".history-date-chip.is-active");
+    if (active) dateStrip.scrollTo({ left: active.offsetLeft - dateStrip.offsetLeft - (dateStrip.clientWidth - active.offsetWidth) / 2, behavior: "smooth" });
   }
 
   function setBrowserState(round, picks) {
@@ -200,7 +152,7 @@
     }).length;
     playersCount.textContent = `${correct}/${finalGames.length}`;
     playersCount.parentElement.style.setProperty("--accuracy", `${finalGames.length ? correct * 100 / finalGames.length : 0}%`);
-    newerButton.title = selectedIndex <= 0 ? "Sem rodada mais recente" : "Ver rodada mais recente";
+    newerButton.title = selectedIndex <= 0 ? "Próxima rodada ainda não fechou" : "Ver rodada mais recente";
     newerButton.setAttribute("aria-label", newerButton.title);
 
     olderButton.disabled = selectedIndex >= rounds.length - 1;
