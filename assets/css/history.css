@@ -447,3 +447,43 @@
 .history-summary>div{background:#fff;border:1px solid #ede8d8}
 .history-summary>div:last-child{background:#fff6df;border-color:#e7c877}
 @media(max-width:600px){.history-game__head{padding:7px 10px}.history-game__compact{padding:6px 10px 8px;gap:4px}.history-game__compact-team{font-size:11px}.history-game__compact-team img{width:28px;height:28px}.history-game__central-score strong{font-size:20px}.history-vote-breakdown{padding:0 10px 8px}.history-my-pick{padding:8px 10px}.history-game__details summary{padding:8px 10px}}
+
+/* Histórico: compact scoreboard refinements */
+.history-game--missing{border-left-color:#a5aab1}
+.history-game--pending{border-left-color:#c6c9ce}
+.history-game__compact-team.is-winner{font-weight:900;color:#20242c}
+.history-game__compact-team.is-loser{font-weight:400;color:#858b95}
+.history-game__compact-team img{width:38px;height:38px}
+.history-game__head{min-height:0!important;padding:6px 12px!important;border:0!important}
+.history-vote-labels>span{display:inline-flex;align-items:center;gap:4px}
+.history-vote-labels i{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.history-vote-labels strong{font-size:13px;font-weight:900;color:#222831}
+.history-vote-bar span:first-child{background:var(--away-vote-color,#b58817)}
+.history-vote-bar span:last-child{background:var(--home-vote-color,#626d82)}
+.history-game__bottom{display:flex;align-items:center;gap:0;border-top:1px solid #eee}
+.history-game__bottom .history-my-pick{flex:1;min-width:0;border:0;padding:8px 10px;gap:6px}
+.history-game__bottom .history-my-pick>span{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.history-game__bottom .history-game__details{flex:none;border:0;border-left:1px solid #eee}
+.history-game__bottom .history-game__details summary{gap:5px;padding:8px}
+.history-game__bottom .history-game__details summary>span:nth-child(2){font-size:10px}
+.history-game__bottom .history-game__details[open] .history-matchup{position:relative}
+.history-game__bottom:has(.history-game__details[open]){flex-wrap:wrap}
+.history-game__bottom:has(.history-game__details[open]) .history-game__details{display:contents}
+.history-game__bottom:has(.history-game__details[open]) .history-game__details .history-matchup{width:100%;flex:0 0 100%}
+.history-result-badge.is-missing{background:#eff0f2;color:#5f6670}
+.history-avatar{background:hsl(var(--avatar-hue) 55% 85%);color:hsl(var(--avatar-hue) 60% 25%)}
+.history-avatar--correct{border-color:#15965a}
+.history-avatar--wrong{border-color:#d94d4d}
+.history-avatar--pending{border-color:#d8dce0}
+.history-summary>div:first-child strong,.history-summary>div:nth-child(2) strong{font-size:15px;color:#59616a}
+.history-summary>div:last-child strong{font-size:23px;color:#694c00}
+.history-summary>div:last-child{background:linear-gradient(to right,#e4c365 var(--accuracy),#fff7e3 var(--accuracy))}
+.history-date-strip{position:relative}
+@media(max-width:600px){
+.history-game__compact-team img{width:36px;height:36px}
+.history-game__bottom .history-avatars .history-avatar:nth-child(n+4){display:none}
+.history-game__bottom .history-game__details summary>span:nth-child(2){font-size:0}
+.history-game__bottom .history-game__details summary>span:nth-child(2)::after{content:"Votos";font-size:10px}
+.history-game__bottom .history-my-pick>span{font-size:10px}
+.history-result-badge{font-size:10px;padding:4px 6px}
+}
