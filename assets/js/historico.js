@@ -94,8 +94,10 @@
   function voterMarkup(list) {
     if (!list.length) return '<span class="history-voter history-voter--empty">Ninguém</span>';
 
-    return list
+    return [...list]
       .sort((a, b) => {
+        if (a.user_id === currentUser.id) return -1;
+        if (b.user_id === currentUser.id) return 1;
         const nameA = profilesById[a.user_id] || "Jogador";
         const nameB = profilesById[b.user_id] || "Jogador";
         return nameA.localeCompare(nameB, "pt-BR");
@@ -103,7 +105,9 @@
       .map(pick => {
         const isYou = pick.user_id === currentUser.id;
         const name = profilesById[pick.user_id] || "Jogador";
-        return `<span class="history-voter ${isYou ? "is-you" : ""}">${escapeHtml(name)}${isYou ? " · você" : ""}</span>`;
+        const short = name.trim().split(/\\s+/);
+        const display = short.length > 1 ? `${short[0]} ${short[1][0]}.` : short[0];
+        return `<span class="history-voter ${isYou ? "is-you" : ""}" title="${escapeHtml(name)}">${escapeHtml(display)}${isYou ? " · você" : ""}</span>`;
       })
       .join("");
   }
@@ -209,10 +213,10 @@
       const homePercent = totalVotes ? 100 - awayPercent : 50;
       const avatars = gamePicks.slice(0, 5).map(pick => {
         const name = profilesById[pick.user_id] || "Jogador";
-        const initials = name.trim().split(/\\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase();
+        const initials = name.trim().slice(0, 2).toUpperCase();
         const hue = [...String(pick.user_id)].reduce((hash, char) => ((hash * 31 + char.charCodeAt(0)) >>> 0), 17) % 360;
         const avatarResult = validResult ? (pick.picked_team_code === (awayWon ? away.code : home.code) ? "correct" : "wrong") : "pending";
-        return `<span class="history-avatar history-avatar--${avatarResult}" style="--avatar-hue:${hue}" title="${escapeHtml(name)}">${escapeHtml(initials)}</span>`;
+        return `<span class="history-avatar history-avatar--${avatarResult}" style="--avatar-hue:${hue}" title="${escapeHtml(name)}">${escapeHtml(initials)}${avatarResult === "correct" ? '<em>✓</em>' : avatarResult === "wrong" ? '<em>×</em>' : ""}</span>`;
       }).join("");
       return `
         <article class="history-game history-game--${result}">
