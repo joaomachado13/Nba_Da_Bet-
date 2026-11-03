@@ -2346,3 +2346,15 @@ html, body { background: var(--page); }
 @media(prefers-reduced-motion:reduce){
 ::view-transition-old(root),::view-transition-new(root){animation:none!important}
 }
+
+/* Ranking readability and alignment */
+.rank-row--achievements{border-left:4px solid transparent!important}
+.rank-row--achievements.is-you{border-left-color:#d6a019!important}
+.rank-row--achievements .rank-person__copy>small{font-size:12px!important;color:#48505c!important}
+.rank-row--achievements .rank-points{display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;gap:3px}
+.rank-row--achievements .rank-points .rank-leader-gap{font-size:11px;line-height:1.2;font-weight:800;letter-spacing:0;color:#88600c;white-space:nowrap}
+.rank-row--achievements .achievement-more{background:transparent!important;border:0!important;box-shadow:none!important;color:#6b7280!important;text-decoration:underline;text-underline-offset:2px}
+.rank-row--achievements .rank-movement{font-size:10px;margin-top:3px}
+.rank-row--achievements .rank-position{font-size:17px}
+.rank-row--achievements .rank-avatar{font-weight:800}
+@media(max-width:600px){.rank-row--achievements .rank-person__copy>small{font-size:11px!important}.rank-row--achievements .rank-points .rank-leader-gap{font-size:10px}}
