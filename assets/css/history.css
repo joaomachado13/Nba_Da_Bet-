@@ -540,3 +540,10 @@
 .history-game__compact-team img{width:36px!important;height:36px!important}
 .history-game__details--full>summary .history-result-badge{font-size:10px}
 }
+
+/* Apenas chips e rolagem das datas */
+.history-date-strip{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important;gap:7px;scroll-snap-type:x proximity;mask-image:linear-gradient(to right,transparent,#000 12px,#000 calc(100% - 12px),transparent);user-select:none}
+.history-date-strip::-webkit-scrollbar{display:none!important}
+.history-date-chip{flex:0 0 auto!important;flex-shrink:0!important;min-width:72px;scroll-snap-align:center}
+.history-date-chip__games{font-size:9px!important;line-height:1.3;margin-top:4px!important;color:#5f6670!important;font-weight:650!important;letter-spacing:0!important}
+.history-date-chip.is-active{background:#fff0b8!important;border-color:#d9a000!important;box-shadow:inset 0 0 0 1px rgba(217,160,0,.2)!important}
