@@ -17,6 +17,57 @@
   let selectedIndex = 0;
   const predictionsCache = new Map();
   let requestSequence = 0;
+  let preloading = false;
+  function showPreloadOverlay() {
+    let overlay = document.getElementById("historyPreloadOverlay");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "historyPreloadOverlay";
+      overlay.className = "history-preload-overlay";
+      overlay.setAttribute("role", "status");
+      overlay.setAttribute("aria-live", "polite");
+      overlay.innerHTML = '<div class="history-preload-card"><div class="history-preload-logo"><img class="history-preload-logo__base" src="https://cdn.nba.com/logos/leagues/logo-nba-logoman.svg" alt=""><div class="history-preload-logo__fill"><img src="https://cdn.nba.com/logos/leagues/logo-nba-logoman.svg" alt=""></div></div><strong>Carregando as rodadas</strong><span id="historyPreloadStatus">Preparando o histórico…</span><div class="history-preload-track"><span id="historyPreloadBar"></span></div></div>';
+      document.body.appendChild(overlay);
+    }
+    overlay.hidden = false;
+    return overlay;
+  }
+  function updatePreloadProgress(done, total) {
+    const pct = total ? Math.round(done * 100 / total) : 100;
+    const bar = document.getElementById("historyPreloadBar");
+    const fill = document.querySelector(".history-preload-logo__fill");
+    const status = document.getElementById("historyPreloadStatus");
+    if (bar) bar.style.width = pct + "%";
+    if (fill) fill.style.height = pct + "%";
+    if (status) status.textContent = "Preparando rodadas… " + pct + "%";
+  }
+  async function preloadAllRounds() {
+    preloading = true;
+    const overlay = showPreloadOverlay();
+    const chunks = rounds.filter(round => round.games.length).map(round => ({date:round.date,ids:round.games.map(game => String(game.id))}));
+    let completed = 0;
+    let failed = 0;
+    const workers = Array.from({length:Math.min(4,chunks.length)}, async (_, worker) => {
+      for (let index = worker; index < chunks.length; index += 4) {
+        const chunk = chunks[index];
+        try {
+          const {data,error} = await supabase.from("predictions").select("user_id,game_id,picked_team_code").in("game_id",chunk.ids);
+          if (error) throw error;
+          predictionsCache.set(chunk.date,data || []);
+        } catch (error) {
+          failed++;
+          console.error("[Bolão] Falha ao pré-carregar rodada",chunk.date,error);
+        } finally {
+          completed++;
+          updatePreloadProgress(completed,chunks.length);
+        }
+      }
+    });
+    await Promise.all(workers);
+    preloading = false;
+    overlay.hidden = true;
+    if (failed) showToast(failed + " rodada(s) não carregaram; tentarão novamente ao abrir.");
+  }
   let dateDrag = null;
   let ignoreDateClick = false;
   dateStrip?.addEventListener("wheel", event => {
@@ -389,6 +440,7 @@
       return;
     }
 
+    await preloadAllRounds();
     await loadSelectedRound();
   } catch (error) {
     console.error("[Bolão] Histórico:", error);
