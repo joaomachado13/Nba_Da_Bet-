@@ -222,7 +222,7 @@
         <article class="history-game history-game--${result}">
           <header class="history-game__head">
             <span>${final ? "Final" : escapeHtml(status || "Programado")}</span>
-            <span>${escapeHtml(formatGameTime(game.start_at))}</span>
+
           </header>
           <div class="history-game__compact">
             <div class="history-game__compact-team ${awayWon ? "is-winner" : homeWon ? "is-loser" : ""}">
@@ -238,17 +238,20 @@
             </div>
           </div>
           <div class="history-vote-breakdown">
-            <div class="history-vote-labels"><span><i style="background:${escapeHtml(away.color)}"></i>${escapeHtml(away.code)} · <strong>${awayPicks.length}</strong> · ${awayPercent}%</span><span>${homePercent}% · <strong>${homePicks.length}</strong> · ${escapeHtml(home.code)}<i style="background:${escapeHtml(home.color)}"></i></span></div>
+            <div class="history-vote-labels"><span><i style="background:${escapeHtml(away.color)}"></i><strong>${awayPicks.length} ${awayPicks.length === 1 ? "voto" : "votos"}</strong> · ${awayPercent}%</span><span>${homePercent}% · <strong>${homePicks.length} ${homePicks.length === 1 ? "voto" : "votos"}</strong><i style="background:${escapeHtml(home.color)}"></i></span></div>
             <div class="history-vote-bar" style="--away-vote-color:${escapeHtml(away.color)};--home-vote-color:${escapeHtml(home.color)}" role="img" aria-label="${awayPercent}% dos votos no ${escapeHtml(away.name)} e ${homePercent}% no ${escapeHtml(home.name)}">
               <span style="width:${awayPercent}%"></span><span style="width:${homePercent}%"></span>
             </div>
           </div>
-          <div class="history-game__bottom"><footer class="history-my-pick ${myPick ? "" : "is-empty"}">
-            <span>Seu palpite: <strong>${myPick ? escapeHtml(myPickName) : "Não registrado"}</strong></span>
-            ${result === "correct" ? '<b class="history-result-badge is-correct">✓ Acertou</b>' : result === "wrong" ? '<b class="history-result-badge is-wrong">✕ Errou</b>' : result === "missing" ? '<b class="history-result-badge is-missing">Sem palpite</b>' : ""}
-          </footer>
-          <details class="history-game__details">
-            <summary><span class="history-avatars">${avatars}</span><span>Ver quem votou</span><span class="history-chevron" aria-hidden="true">⌄</span></summary>
+          <details class="history-game__details history-game__details--full">
+            <summary aria-label="Expandir ou recolher votos desta partida">
+              <span class="history-my-pick ${myPick ? "" : "is-empty"}">
+                <span>Seu palpite: <strong>${myPick ? escapeHtml(myPickName) : "Não registrado"}</strong></span>
+                ${result === "correct" ? '<b class="history-result-badge is-correct">✓ Acertou</b>' : result === "wrong" ? '<b class="history-result-badge is-wrong">✕ Errou</b>' : result === "missing" ? '<b class="history-result-badge is-missing">Sem palpite</b>' : ""}
+              </span>
+              <span class="history-avatars" aria-hidden="true">${avatars}</span>
+              <span class="history-chevron" aria-hidden="true">⌄</span>
+            </summary>
             <div class="history-matchup">
               ${teamBlock(away, awayPicks, awayWon, "VISITANTE")}
               <div class="history-versus">VS</div>
