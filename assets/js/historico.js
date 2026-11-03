@@ -17,9 +17,6 @@
   let selectedIndex = 0;
   const predictionsCache = new Map();
   let requestSequence = 0;
-  let activeGameFilter = "all";
-  let lastRenderedRound = null;
-  let lastRenderedPredictions = [];
   let preloading = false;
   function showPreloadOverlay() {
     let overlay = document.getElementById("historyPreloadOverlay");
@@ -227,8 +224,6 @@
       return byGame.get(String(game.id) + ":" + currentUser.id) === winner;
     }).length;
     playersCount.textContent = `${correct}/${finalGames.length}`;
-    const context = document.getElementById("historyMobileContext");
-    if (context) context.textContent = `${formatWeekday(round.date)}, ${formatShortDate(round.date)} · ${correct}/${finalGames.length} acertos`;
     playersCount.parentElement.style.setProperty("--accuracy", `${finalGames.length ? correct * 100 / finalGames.length : 0}%`);
     newerButton.title = selectedIndex >= rounds.length - 1 ? "Sem rodada mais recente" : "Ver rodada mais recente";
     newerButton.setAttribute("aria-label", newerButton.title);
@@ -238,8 +233,6 @@
   }
 
   function renderGames(round, predictions) {
-    lastRenderedRound = round;
-    lastRenderedPredictions = predictions || [];
     const picksByGame = new Map();
     for (const pick of predictions || []) {
       const id = String(pick.game_id);
@@ -247,7 +240,7 @@
       picksByGame.get(id).push(pick);
     }
 
-    const renderedGames = round.games.map(game => {
+    gamesHost.innerHTML = round.games.map(game => {
       const gamePicks = picksByGame.get(String(game.id)) || [];
       const awayPicks = gamePicks.filter(pick => pick.picked_team_code === game.away_team_code);
       const homePicks = gamePicks.filter(pick => pick.picked_team_code === game.home_team_code);
@@ -291,17 +284,13 @@
       const totalVotes = awayPicks.length + homePicks.length;
       const awayPercent = totalVotes ? Math.round(awayPicks.length * 100 / totalVotes) : 50;
       const homePercent = totalVotes ? 100 - awayPercent : 50;
-      if (activeGameFilter === "correct" && result !== "correct") return "";
-      if (activeGameFilter === "wrong" && result !== "wrong") return "";
-      const otherPicks = gamePicks.filter(pick => pick.user_id !== currentUser.id);
-      const avatars = otherPicks.slice(0,3).map(pick => {
+      const avatars = gamePicks.slice(0, 5).map(pick => {
         const name = profilesById[pick.user_id] || "Jogador";
         const initials = name.trim().slice(0, 2).toUpperCase();
         const hue = [...String(pick.user_id)].reduce((hash, char) => ((hash * 31 + char.charCodeAt(0)) >>> 0), 17) % 360;
         const avatarResult = validResult ? (pick.picked_team_code === (awayWon ? away.code : home.code) ? "correct" : "wrong") : "pending";
         return `<span class="history-avatar history-avatar--${avatarResult}" style="--avatar-hue:${hue}" title="${escapeHtml(name)}">${escapeHtml(initials)}${avatarResult === "correct" ? '<em>✓</em>' : avatarResult === "wrong" ? '<em>×</em>' : ""}</span>`;
-      }).join("") + (otherPicks.length > 3 ? `<span class="history-avatar history-avatar--more" title="${otherPicks.length - 3} participantes adicionais">+${otherPicks.length - 3}</span>` : "");
-      const unanimous = totalVotes > 0 && (awayPicks.length === 0 || homePicks.length === 0);
+      }).join("");
       return `
         <article class="history-game history-game--${result}">
           <header class="history-game__head">
@@ -321,11 +310,11 @@
               ${home.logo ? `<img src="${escapeHtml(home.logo)}" alt="" loading="lazy">` : ""}
             </div>
           </div>
-          <div class="history-vote-breakdown ${unanimous ? "is-unanimous" : ""}">
-            ${unanimous ? `<div class="history-unanimous">Unânime · ${totalVotes}/${totalVotes} votos · ${escapeHtml(awayPicks.length ? away.name : home.name)}</div>` : `<div class="history-vote-labels"><span><i style="background:${escapeHtml(away.color)}"></i><strong>${awayPicks.length} ${awayPicks.length === 1 ? "voto" : "votos"}</strong> · ${awayPercent}%</span><span>${homePercent}% · <strong>${homePicks.length} ${homePicks.length === 1 ? "voto" : "votos"}</strong><i style="background:${escapeHtml(home.color)}"></i></span></div>
+          <div class="history-vote-breakdown">
+            <div class="history-vote-labels"><span><i style="background:${escapeHtml(away.color)}"></i><strong>${awayPicks.length} ${awayPicks.length === 1 ? "voto" : "votos"}</strong> · ${awayPercent}%</span><span>${homePercent}% · <strong>${homePicks.length} ${homePicks.length === 1 ? "voto" : "votos"}</strong><i style="background:${escapeHtml(home.color)}"></i></span></div>
             <div class="history-vote-bar" style="--away-vote-color:${escapeHtml(away.color)};--home-vote-color:${escapeHtml(home.color)}" role="img" aria-label="${awayPercent}% dos votos no ${escapeHtml(away.name)} e ${homePercent}% no ${escapeHtml(home.name)}">
               <span style="width:${awayPercent}%"></span><span style="width:${homePercent}%"></span>
-            </div>`}
+            </div>
           </div>
           <details class="history-game__details history-game__details--full">
             <summary aria-label="Expandir ou recolher votos desta partida">
@@ -334,7 +323,7 @@
                 ${result === "correct" ? '<b class="history-result-badge is-correct">✓ Acertou</b>' : result === "wrong" ? '<b class="history-result-badge is-wrong">✕ Errou</b>' : result === "missing" ? '<b class="history-result-badge is-missing">Sem palpite</b>' : ""}
               </span>
               <span class="history-avatars" aria-hidden="true">${avatars}</span>
-              <span class="history-chevron" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+              <span class="history-chevron" aria-hidden="true">⌄</span>
             </summary>
             <div class="history-matchup">
               ${teamBlock(away, awayPicks, awayWon, "VISITANTE")}
@@ -344,21 +333,8 @@
           </details>
         </article>
       `;
-    }).filter(Boolean);
-    gamesHost.innerHTML = renderedGames.join("") || '<div class="history-empty">Nenhum jogo corresponde a este filtro.</div>';
+    }).join("");
   }
-
-  document.getElementById("historyGameFilters")?.addEventListener("click", event => {
-    const button = event.target.closest("[data-history-filter]");
-    if (!button) return;
-    activeGameFilter = button.dataset.historyFilter;
-    document.querySelectorAll("[data-history-filter]").forEach(item => {
-      const selected = item === button;
-      item.classList.toggle("is-active", selected);
-      item.setAttribute("aria-pressed", String(selected));
-    });
-    if (lastRenderedRound) renderGames(lastRenderedRound, lastRenderedPredictions);
-  });
 
   async function loadSelectedRound() {
     const round = rounds[selectedIndex];
