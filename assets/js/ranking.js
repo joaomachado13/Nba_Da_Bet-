@@ -29,6 +29,7 @@
 
   function renderError(message) {
     if (!host) return;
+    host.setAttribute("aria-busy", "false");
     host.innerHTML = `
       <div class="rank-row">
         <div class="rank-position">—</div>
@@ -36,7 +37,7 @@
           <div class="avatar">!</div>
           <div>
             <div class="rank-name">Ranking indisponível</div>
-            <small>${escapeHtml(message)}</small>
+            <small>${escapeHtml(message)}</small><button type="button" class="secondary-button" data-retry>Carregar novamente</button>
           </div>
         </div>
         <div class="rank-points">—</div>
@@ -97,22 +98,16 @@
   }
 
   try {
-    const [{ data: rows, error: rankingError }, { data: profiles, error: profilesError }, { data: games, error: gamesError }, { data: predictions, error: predictionsError }] = await Promise.all([
+    const [{ data: rows, error: rankingError }, all] = await Promise.all([
       supabase.from("standings")
         .select("user_id,display_name,points,decided_picks,total_picks")
         .order("points", { ascending: false })
         .order("display_name", { ascending: true }),
-      supabase.from("profiles").select("id,display_name"),
-      supabase.from("games")
-        .select("id,round_date,start_at,status,away_team_code,home_team_code,away_score,home_score")
-        .neq("status", "cancelled")
-        .order("start_at", { ascending: true }),
-      supabase.from("predictions").select("user_id,game_id,picked_team_code")
+      window.loadBolaoSeasonData(session.user.id)
     ]);
-
-    if (rankingError || profilesError || gamesError || predictionsError) {
-      throw rankingError || profilesError || gamesError || predictionsError;
-    }
+    if (rankingError) throw rankingError;
+    const { profiles, games, predictions } = all;
+    host.setAttribute("aria-busy", "false");
 
     const computed = window.BolaoAchievements.compute({
       games: games || [],
@@ -194,7 +189,7 @@
           <div class="rank-person">
             <div class="avatar rank-avatar" style="--rank-avatar-hue:${hue}">${escapeHtml(initials(name))}</div>
             <div class="rank-person__copy">
-              <div class="rank-name" title="${escapeHtml(name)}">${escapeHtml(shortName)}${isYou ? " · você" : ""}</div>
+              <button type="button" class="rank-name rank-profile-button" data-profile-user="${escapeHtml(person.user_id)}" aria-label="Ver perfil de ${escapeHtml(name)}">${escapeHtml(shortName)}${isYou ? " · você" : ""}</button>
               <small>${winCount > 0 ? `🏆 ${winsLabel}<span class="rank-meta-dot">·</span>` : ""}${accuracy}% de acertos <span title="${decidedCount} palpites decididos">(${points}/${decidedCount})</span></small>
 
               ${achievementMarkup(person.user_id, computed)}

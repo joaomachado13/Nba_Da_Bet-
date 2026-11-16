@@ -9,6 +9,32 @@
   const recoveryButton = document.querySelector("#legacyRecoveryButton");
   const recoveryEmail = document.querySelector("#legacyRecoveryEmail");
   const toast = document.querySelector("#toast");
+  const codeError = document.querySelector("#roomCodeError");
+  let busy = false;
+
+  document.querySelector("#toggleRoomCode")?.addEventListener("click", event => {
+    const visible = codeInput.type === "password";
+    codeInput.type = visible ? "text" : "password";
+    event.currentTarget.textContent = visible ? "Ocultar" : "Mostrar";
+    event.currentTarget.setAttribute("aria-pressed", String(visible));
+  });
+  codeInput?.addEventListener("input", () => {
+    codeInput.removeAttribute("aria-invalid");
+    if (codeError) codeError.textContent = "";
+  });
+
+  function showConnectionError() {
+    if (codeError) {
+      codeError.textContent = "Não foi possível conectar. Verifique sua conexão e tente novamente.";
+    }
+    submitButton.disabled = true;
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "secondary-button";
+    retry.textContent = "Tentar conectar novamente";
+    retry.addEventListener("click", () => location.reload());
+    form?.appendChild(retry);
+  }
 
   function roomPassword(code) {
     return `BolaoNBA-${code}!`;
@@ -29,6 +55,7 @@
   function setBusy(busy) {
     if (!submitButton) return;
     submitButton.disabled = busy;
+    submitButton.setAttribute("aria-busy", String(busy));
     submitButton.textContent = busy ? "Entrando…" : "Entrar";
   }
 
@@ -65,6 +92,7 @@
 
   async function login(event) {
     event.preventDefault();
+    if (busy) return;
 
     if (!supabase) {
       showToast("Não foi possível conectar ao bolão.");
@@ -81,11 +109,14 @@
     }
 
     if (code !== ROOM_CODE) {
+      codeInput.setAttribute("aria-invalid", "true");
+      if (codeError) codeError.textContent = "Código incorreto. Confira os quatro dígitos da sala.";
       showToast("Senha da sala incorreta.");
       codeInput?.select();
       return;
     }
 
+    busy = true;
     setBusy(true);
 
     try {
@@ -106,6 +137,7 @@
       console.error("[Bolão] Login:", error);
       showToast("Não foi possível entrar agora.");
     } finally {
+      busy = false;
       setBusy(false);
     }
   }
@@ -113,6 +145,7 @@
   async function init() {
     if (!supabase) {
       showToast("Supabase não carregou.");
+      showConnectionError();
       return;
     }
 
@@ -124,7 +157,8 @@
 
     form?.addEventListener("submit", login);
     recoveryButton?.addEventListener("click", sendRecovery);
-    emailInput?.focus();
+    // Avoid opening the phone keyboard before the participant chooses a field.
+    if (window.matchMedia("(pointer: fine)").matches) emailInput?.focus();
   }
 
   init().catch(error => {

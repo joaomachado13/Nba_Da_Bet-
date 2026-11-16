@@ -2,7 +2,10 @@
   const fallback = 'index.html';
   // Prefetch only internal HTML destinations; never interfere with auth or forms.
   const prefetched = new Set();
+  const connection = navigator.connection;
+  const canPrefetch = () => !document.hidden && !connection?.saveData && !/^(slow-)?2g$/.test(connection?.effectiveType || "");
   const prefetch = (href) => {
+    if (!canPrefetch()) return;
     try {
       const url = new URL(href, location.href);
       if (url.origin !== location.origin || !url.pathname.endsWith(".html") || url.pathname === location.pathname || prefetched.has(url.href)) return;
@@ -22,10 +25,7 @@
     const anchor = event.target.closest?.("a[href]");
     if (anchor) prefetch(anchor.href);
   });
-  const commonPages = ["index.html", "ranking.html", "estatisticas.html", "mais.html", "historico.html"];
-  const warmNavigation = () => commonPages.forEach(page => prefetch(page));
-  if ("requestIdleCallback" in window) window.requestIdleCallback(warmNavigation, {timeout:2500});
-  else window.addEventListener("load", warmNavigation, {once:true});
+  // Prefetch only on expressed intent; avoid downloading every route on mobile data.
 
   document.querySelectorAll('[data-back]').forEach((button) => {
     button.addEventListener('click', () => {

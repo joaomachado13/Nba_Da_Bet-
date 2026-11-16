@@ -1,11 +1,11 @@
-const CACHE_NAME = "nbadabet-shell-v3";
+const CACHE_NAME = "nbadabet-shell-v4";
 const OFFLINE_URL = "/offline.html";
 const APP_SHELL = [
   "/", "/index.html", "/login.html", "/ranking.html", "/estatisticas.html",
   "/mais.html", "/historico.html", OFFLINE_URL, "/manifest.webmanifest",
   "/assets/css/styles.css", "/assets/css/room.css", "/assets/css/secondary-pages.css",
-  "/assets/css/history.css", "/assets/css/pwa.css", "/assets/js/pwa.js",
-  "/assets/icons/icon-192.png", "/assets/icons/nba-logoman.svg", "/assets/icons/apple-touch-icon.png"
+  "/assets/css/history.css", "/assets/css/pwa.css", "/assets/css/interaction.css", "/assets/js/pwa.js", "/assets/js/ui.js",
+  "/assets/icons/nba-brand.svg", "/assets/icons/icon-192.png", "/assets/icons/nba-logoman.svg", "/assets/icons/apple-touch-icon.png"
 ];
 
 self.addEventListener("install", event => {
@@ -15,7 +15,7 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
+      .then(keys => Promise.all(keys.filter(key => key.startsWith("nbadabet-shell-") && key !== CACHE_NAME).map(key => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });

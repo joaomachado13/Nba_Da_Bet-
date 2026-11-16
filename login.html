@@ -18,20 +18,25 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
   <link rel="stylesheet" href="assets/css/room.css" />
+  <link rel="stylesheet" href="assets/css/interaction.css" />
 </head>
 <body class="auth-page room-entry-page">
   <main class="auth-card room-entry-card">
-    <img class="nba-auth-logo" src="https://cdn.nba.com/logos/leagues/logo-nba-logoman.svg" alt="NBA">
+    <img class="nba-auth-logo" src="/assets/icons/nba-brand.svg" alt="NBA">
     <p class="eyebrow">BOLÃO NBA · TEMPORADA 26/27</p>
     <h1>Entrar no bolão</h1>
-    <p class="auth-copy">Use o mesmo e-mail cadastrado e o código da sala. Você pode entrar em mais de um navegador ou aparelho.</p>
+    <p class="auth-copy">Seus palpites, sua torcida. Entre com o e-mail cadastrado e o código da sala para acompanhar a rodada.</p>
 
     <form id="loginForm" class="auth-form room-form">
       <label for="playerEmail">Seu e-mail</label>
       <input id="playerEmail" type="email" required maxlength="120" placeholder="voce@email.com" autocomplete="email" inputmode="email" />
 
       <label for="roomCode">Senha da sala</label>
-      <input id="roomCode" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" required placeholder="••••" autocomplete="current-password" />
+      <div class="password-field">
+      <input id="roomCode" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" required placeholder="••••" autocomplete="current-password" aria-describedby="roomCodeError" />
+      <button class="password-toggle" id="toggleRoomCode" type="button" aria-controls="roomCode" aria-pressed="false">Mostrar</button>
+      </div>
+      <p class="field-error" id="roomCodeError" aria-live="polite"></p>
 
       <button class="primary-button" type="submit">Entrar</button>
     </form>
@@ -51,10 +56,11 @@
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-  <script src="assets/js/config.js"></script>
-  <script src="assets/js/supabase-client.js"></script>
-  <script src="assets/js/auth.js"></script>
-  <script src="/assets/js/pwa.js"></script>
+  <script defer src="assets/js/ui.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+  <script defer src="assets/js/config.js"></script>
+  <script defer src="assets/js/supabase-client.js"></script>
+  <script defer src="assets/js/auth.js"></script>
+  <script defer src="/assets/js/pwa.js"></script>
 </body>
 </html>

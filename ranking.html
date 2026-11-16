@@ -17,6 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/interaction.css" />
 </head>
 <body>
   <div class="app-shell">
@@ -33,13 +34,16 @@
     </header>
 
     <main class="page-content">
-      <section class="leaderboard" id="leaderboard"></section>
+      <section class="leaderboard" id="leaderboard" aria-busy="true" aria-label="Ranking da temporada">
+        <span class="sr-only">Carregando o ranking…</span>
+        <div class="loading-card" aria-hidden="true"><span class="skeleton-line short"></span><span class="skeleton-line"></span><span class="skeleton-line"></span></div>
+      </section>
 
       <section class="highlight-card">
         <div class="highlight-icon">♛</div>
         <div>
           <span class="section-kicker">CORAJOSO DA NOITE</span>
-          <h2 id="braveTitle">Carlos foi o único de Celtics 👀</h2>
+          <h2 id="braveTitle">Buscando o destaque da rodada…</h2>
           <p>Quando todo mundo vai para um lado, sempre tem alguém disposto a contrariar o grupo.</p>
         </div>
       </section>
@@ -69,14 +73,15 @@
     </nav>
   </div>
 
-  <script src="assets/js/navigation.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-  <script src="assets/js/config.js"></script>
-  <script src="assets/js/supabase-client.js"></script>
-  <script src="assets/js/season.js"></script>
-  <script src="assets/js/achievements.js"></script>
-  <script src="assets/js/ranking.js"></script>
-  <script src="assets/js/experience.js"></script>
-  <script src="/assets/js/pwa.js"></script>
+  <script defer src="assets/js/navigation.js"></script>
+  <script defer src="assets/js/ui.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+  <script defer src="assets/js/config.js"></script>
+  <script defer src="assets/js/supabase-client.js"></script>
+  <script defer src="assets/js/season.js"></script>
+  <script defer src="assets/js/achievements.js"></script>
+  <script defer src="assets/js/ranking.js"></script>
+  <script defer src="assets/js/experience.js"></script>
+  <script defer src="/assets/js/pwa.js"></script>
 </body>
 </html>

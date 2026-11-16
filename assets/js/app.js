@@ -43,6 +43,9 @@
   let previousLockedState = null;
   let roundConfirmation = null;
   let finalizeArmed = false;
+  const pendingPicks = new Map();
+  let confirmingRound = false;
+  let pickRevision = 0;
 
   function showToast(message) {
     toast.textContent = message;
@@ -153,6 +156,7 @@
     const avatarEl = document.querySelector("#profileButton .profile-avatar");
     if (nameEl) nameEl.textContent = fallbackName;
     if (avatarEl) avatarEl.textContent = fallbackInitials || "J";
+    window.BolaoUI?.finishLoading(document.getElementById("profileButton"));
 
     const params = new URLSearchParams({
       select: "id,display_name,avatar_url,favorite_team_code",
@@ -175,6 +179,7 @@
   }
 
   async function loadPredictions() {
+    const revision = pickRevision;
     if (!currentUser || !games.length) {
       picks = {};
       revealedPicks = {};
@@ -193,6 +198,7 @@
         game_id: `in.(${gameIds.join(",")})`
       });
       const rows = await restRequest(`predictions?${params}`);
+      if (revision !== pickRevision || pendingPicks.size) return;
       picks = Object.fromEntries((rows || []).map(row => [String(row.game_id), row.picked_team_code]));
       revealedPicks = {};
       revealedNames = {};
@@ -205,6 +211,7 @@
       order: "created_at.asc"
     });
     const rows = await restRequest(`predictions?${predictionParams}`) || [];
+    if (revision !== pickRevision || pendingPicks.size) return;
 
     picks = Object.fromEntries(
       rows
@@ -296,11 +303,18 @@
 
   function renderRoundFinalize() {
     if (!roundFinalizeEl || !roundFinalizeButtonEl) return;
+    roundFinalizeButtonEl.setAttribute("aria-busy", String(confirmingRound || pendingPicks.size > 0));
 
     const validGames = pickableGames();
     const missing = missingPickGames();
     const done = validGames.length - missing.length;
     const locked = isLocked();
+
+    if (pendingPicks.size || confirmingRound) {
+      roundFinalizeButtonEl.disabled = true;
+      roundFinalizeButtonEl.textContent = confirmingRound ? "Confirmando…" : "Salvando palpites…";
+      return;
+    }
 
     roundFinalizeCountEl.textContent = `${done}/${validGames.length}`;
 
@@ -362,6 +376,7 @@
   }
 
   async function confirmRound() {
+    if (pendingPicks.size || confirmingRound) return;
     if (!currentUser || isLocked()) {
       showToast("A rodada já está fechada.");
       renderRoundFinalize();
@@ -374,11 +389,13 @@
     if (missing.length && !finalizeArmed) {
       finalizeArmed = true;
       renderRoundFinalize();
-      roundFinalizeEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+      roundFinalizeEl?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "center" });
       return;
     }
 
     roundFinalizeButtonEl.disabled = true;
+    confirmingRound = true;
+    roundFinalizeButtonEl.setAttribute("aria-busy", "true");
     roundFinalizeButtonEl.textContent = "Confirmando…";
 
     const payload = {
@@ -399,9 +416,12 @@
       });
       roundConfirmation = payload;
       finalizeArmed = false;
+      confirmingRound = false;
       renderRoundFinalize();
+      window.BolaoUI?.feedback(roundFinalizeEl);
       showToast(missing.length ? "✓ Rodada confirmada mesmo incompleta." : "✓ Rodada confirmada.");
     } catch (error) {
+      confirmingRound = false;
       roundFinalizeButtonEl.disabled = false;
       renderRoundFinalize();
       showToast("Não foi possível confirmar a rodada.");
@@ -595,6 +615,11 @@
   }
 
   function renderGames() {
+    gamesList.setAttribute("aria-busy", "false");
+    if (sourceName === "supabase-error") {
+      gamesList.innerHTML = '<div class="game-card load-error" role="status"><strong>Não foi possível buscar a rodada</strong><p>Seus palpites não foram alterados. Tente carregar novamente.</p><button type="button" class="secondary-button" data-retry>Carregar novamente</button></div>';
+      return;
+    }
     if (!games.length) {
       gamesList.innerHTML = `
         <div class="game-card empty-games" role="status">
@@ -621,8 +646,6 @@
 
       return `
         <article class="game-card state-${visualState}" data-game-id="${game.id}" style="--away-color:${game.away.color};--home-color:${game.home.color};--away-soft:${game.away.soft};--home-soft:${game.home.soft};--away-mark-opacity:${game.away.watermarkOpacity};--home-mark-opacity:${game.home.watermarkOpacity}">
-          ${game.away.logo_url ? `<img class="team-watermark team-watermark--away" src="${game.away.logo_url}" alt="" aria-hidden="true">` : ""}
-          ${game.home.logo_url ? `<img class="team-watermark team-watermark--home" src="${game.home.logo_url}" alt="" aria-hidden="true">` : ""}
           <div class="game-meta">
             <span class="game-time">${formatTime(game.start_at)}</span>
             <span class="game-status ${state === "live" ? "is-live" : ""}">${state === "live" ? '<i class="live-dot" aria-hidden="true"></i>' : ''}${statusLabel(game, locked)}</span>
@@ -684,28 +707,59 @@
         const card = btn.closest(".game-card");
         const game = games.find(item => item.id === card.dataset.gameId);
         if (!game || gameState(game) !== "scheduled") return showToast("Este jogo não aceita alterações agora.");
-        const previous = picks[card.dataset.gameId];
-        picks[card.dataset.gameId] = btn.dataset.pick;
-        renderGames();
-        btn.disabled = true;
-        persistPick(card.dataset.gameId, btn.dataset.pick)
+        if (pendingPicks.has(game.id) || confirmingRound || picks[game.id] === btn.dataset.pick) return;
+        pendingPicks.set(game.id, btn.dataset.pick);
+        pickRevision++;
+        syncPickCard(game);
+        renderRoundFinalize();
+        persistPick(game.id, btn.dataset.pick)
           .then(async () => {
+            picks[game.id] = btn.dataset.pick;
+            pickRevision++;
             if (roundConfirmation) await clearRoundConfirmation();
             finalizeArmed = false;
-            renderRoundFinalize();
+            window.BolaoUI?.feedback(btn);
             showToast(`✓ Palpite salvo em ${btn.dataset.pick}`);
           })
           .catch(error => {
-            if (previous) picks[card.dataset.gameId] = previous; else delete picks[card.dataset.gameId];
-            renderGames();
             showToast("Não foi possível salvar o palpite.");
+            card.classList.add("save-failed");
+            card.querySelector(".pick-saved").textContent = "Não foi salvo. Tente escolher o time novamente.";
             console.error(error);
+          })
+          .finally(() => {
+            pendingPicks.delete(game.id);
+            syncPickCard(game);
+            updateProgress();
+            renderRoundFinalize();
           });
       });
     });
 
     updateProgress();
     renderRoundFinalize();
+  }
+
+  // Update the active card in place so keyboard focus and other games survive saving.
+  function syncPickCard(game) {
+    const card = [...gamesList.querySelectorAll("[data-game-id]")].find(el => el.dataset.gameId === game.id);
+    if (!card) return;
+    const saving = pendingPicks.has(game.id);
+    const selected = pendingPicks.get(game.id) || picks[game.id];
+    if (saving) card.classList.remove("save-failed");
+    card.setAttribute("aria-busy", String(saving));
+    card.classList.toggle("is-saving", saving);
+    card.querySelectorAll(".pick-button").forEach(button => {
+      const active = button.dataset.pick === selected;
+      button.classList.toggle("selected", active);
+      button.setAttribute("aria-pressed", String(active));
+      button.setAttribute("aria-disabled", String(saving));
+      button.querySelector("b")?.remove();
+      if (active) button.insertAdjacentHTML("beforeend", '<b aria-hidden="true">✓</b>');
+    });
+    if (!card.classList.contains("save-failed")) {
+      card.querySelector(".pick-saved").innerHTML = saving ? "Salvando seu palpite…" : savedMessage(game, selected, isLocked());
+    }
   }
 
   function updateProgress() {
@@ -750,11 +804,12 @@
       const initials = String(person.display_name || "J").split(/\s+/).slice(0,2).map(part => part[0] || "").join("").toUpperCase();
       return `<p class="mini-rank-row ${person.user_id === currentUser?.id ? "is-you" : ""} ${index === 0 ? "is-leader" : ""}">
         <span class="mini-rank-position">${index === 0 ? '<span class="leader-crown">♛</span>' : index + 1}</span>
-        <span class="mini-avatar">${initials}</span>
-        <span class="mini-rank-name">${person.display_name}${person.user_id === currentUser?.id ? " · você" : ""}</span>
+        <span class="mini-avatar">${escapeHtml(initials)}</span>
+        <span class="mini-rank-name">${escapeHtml(person.display_name)}${person.user_id === currentUser?.id ? " · você" : ""}</span>
         <strong>${person.points} pts</strong>
       </p>`;
     }).join("") || '<p class="mini-rank-row">Sem pontuação ainda.</p>';
+    window.BolaoUI?.finishLoading(miniRankingEl.closest(".season-glance"));
   }
 
   async function renderNextRound() {
@@ -790,9 +845,25 @@
     } else {
       nextRoundMatchEl.textContent = "Sem jogos programados.";
     }
+    window.BolaoUI?.finishLoading(document.getElementById("nextRoundCard"));
   }
 
   function updateRoundStatus() {
+    window.BolaoUI?.finishLoading(document.querySelector(".round-card"));
+    if (sourceName === "supabase-error") {
+      gamesSummaryEl.textContent = "Dados da rodada indisponíveis";
+      lockTimeEl.textContent = "—";
+      countdownEl.textContent = "Tente carregar novamente para consultar o fechamento.";
+      if (roundStateEl) {
+        roundStateEl.textContent = "INDISPONÍVEL";
+        roundStateEl.classList.add("locked");
+      }
+      [roundGamesCountEl, roundPicksStatusEl, picksDoneEl, picksTotalEl, picksPercentEl].forEach(el => {
+        if (el) el.textContent = "—";
+      });
+      if (roundFinalizeEl) roundFinalizeEl.hidden = true;
+      return;
+    }
     if (!lockAt) {
       lockTimeEl.textContent = "—";
       countdownEl.textContent = "Confira abaixo a próxima rodada programada.";
@@ -942,31 +1013,38 @@
     // Migração única: habilita e-mail + senha da sala para esta conta.
     // Depois disso, novos logins podem coexistir em qualquer navegador/aparelho.
     await migrateRoomLogin();
-    await loadProfile();
+    loadProfile().catch(error => console.warn("[Bolão] Perfil indisponível:", error));
     document.querySelector("#todayLabel").textContent = formatRoundDate(todayKey());
     games = await resolveGames();
-    await loadPredictions();
+    await Promise.all([loadPredictions(), loadRoundConfirmation()]);
     lockAt = window.BolaoRules.computeLockAt(games);
-    await loadRoundConfirmation();
     renderGames();
-    await renderMiniRanking();
-    await renderNextRound();
+    Promise.allSettled([renderMiniRanking(), renderNextRound()]).then(results => {
+      if (results[0].status === "rejected") {
+        if (yourRankSummaryEl) yourRankSummaryEl.textContent = "Ranking indisponível no momento.";
+        if (miniRankingEl) miniRankingEl.textContent = "Tente consultar o ranking novamente mais tarde.";
+        window.BolaoUI?.finishLoading(miniRankingEl?.closest(".season-glance"));
+      }
+      if (results[1].status === "rejected" && nextRoundMatchEl) {
+        nextRoundMatchEl.textContent = "Prévia indisponível no momento.";
+        if (nextRoundGamesEl) nextRoundGamesEl.textContent = "— jogos";
+        window.BolaoUI?.finishLoading(document.getElementById("nextRoundCard"));
+      }
+    });
     updateRoundStatus();
     setInterval(updateRoundStatus, 1000);
 
     let refreshing = false;
     async function refreshRoundData() {
-      if (refreshing || document.hidden) return;
+      if (refreshing || document.hidden || pendingPicks.size || confirmingRound) return;
       refreshing = true;
       try {
         const freshGames = await loadGamesFromSupabase();
         if (freshGames) games = freshGames;
-        await loadPredictions();
+        await Promise.all([loadPredictions(), loadRoundConfirmation()]);
         lockAt = window.BolaoRules.computeLockAt(games);
-        await loadRoundConfirmation();
         renderGames();
-        await renderMiniRanking();
-        await renderNextRound();
+        await Promise.allSettled([renderMiniRanking(), renderNextRound()]);
         updateRoundStatus();
       } catch (error) {
         console.warn("[Bolão] Atualização automática:", error);
@@ -1008,16 +1086,32 @@
     }
 
     if (gamesList) {
+      gamesList.setAttribute("aria-busy", "false");
       gamesList.innerHTML = `
-        <div class="game-card empty-games">
+        <div class="game-card load-error" role="status">
           <div>
             <strong>Não foi possível carregar o bolão.</strong>
-            <span>Atualize a página. Se continuar, abra novamente pelo link do convite.</span>
+            <p>Seus palpites não foram alterados. Tente carregar novamente.</p>
+            <button class="secondary-button" type="button" data-retry>Carregar novamente</button>
           </div>
         </div>`;
     }
     if (gamesSummaryEl) gamesSummaryEl.textContent = "Falha ao carregar os dados da rodada";
     if (countdownEl) countdownEl.textContent = "Não foi possível carregar o horário da rodada.";
+    [lockTimeEl, roundGamesCountEl, roundPicksStatusEl, picksDoneEl, picksTotalEl, picksPercentEl].forEach(el => {
+      if (el) el.textContent = "—";
+    });
+    if (roundStateEl) {
+      roundStateEl.textContent = "INDISPONÍVEL";
+      roundStateEl.classList.add("locked");
+    }
+    window.BolaoUI?.finishLoading(document.querySelector(".round-card"));
+    if (yourRankSummaryEl) yourRankSummaryEl.textContent = "Ranking indisponível no momento.";
+    if (miniRankingEl) miniRankingEl.textContent = "Tente consultar o ranking novamente mais tarde.";
+    window.BolaoUI?.finishLoading(miniRankingEl?.closest(".season-glance"));
+    if (nextRoundMatchEl) nextRoundMatchEl.textContent = "Prévia indisponível no momento.";
+    if (nextRoundGamesEl) nextRoundGamesEl.textContent = "— jogos";
+    window.BolaoUI?.finishLoading(document.getElementById("nextRoundCard"));
     showToast("Falha ao carregar o bolão.");
   });
 })();
