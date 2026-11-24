@@ -22,6 +22,7 @@ as $$
   );
 $$;
 revoke all on function private.is_round_voting_override_active(date) from public;
+grant usage on schema private to authenticated;
 grant execute on function private.is_round_voting_override_active(date) to authenticated;
 
 drop policy if exists predictions_insert_before_round_lock on public.predictions;
