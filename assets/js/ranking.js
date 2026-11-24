@@ -130,10 +130,16 @@
     const hasDecidedGames = sortedRows.some(person => Number(person.decided_picks || 0) > 0);
     const topPoints = Number(sortedRows[0]?.points || 0);
     const topWins = season.byUser[sortedRows[0]?.user_id]?.wins || 0;
-    const topTied = sortedRows.filter(person =>
-      Number(person.points || 0) === topPoints &&
-      (season.byUser[person.user_id]?.wins || 0) === topWins && Number(person.points || 0) * Number(sortedRows[0]?.decided_picks || 0) === topPoints * Number(person.decided_picks || 0)
-    ).length > 1;
+    const sameRank = (a,b) => {
+      const aPoints=Number(a.points||0),bPoints=Number(b.points||0);
+      if(aPoints!==bPoints)return false;
+      const aWins=Number(season.byUser[a.user_id]?.wins||0),bWins=Number(season.byUser[b.user_id]?.wins||0);
+      if(aWins!==bWins)return false;
+      const aDecided=Number(a.decided_picks||0),bDecided=Number(b.decided_picks||0);
+      const aRate=aDecided?aPoints/aDecided:0,bRate=bDecided?bPoints/bDecided:0;
+      return Math.abs(aRate-bRate)<1e-10;
+    };
+    const topTied = sortedRows.length>1 && sortedRows.filter(person=>sameRank(person,sortedRows[0])).length>1;
 
     host.innerHTML = sortedRows.map((person, index) => {
       const name = person.display_name || "Jogador";
@@ -147,14 +153,8 @@
         ? (move > 0 ? `<span class="rank-movement up">↑${move}</span>` : move < 0 ? `<span class="rank-movement down">↓${Math.abs(move)}</span>` : '<span class="rank-movement neutral">—</span>')
         : "";
 
-      const sameScoreBefore = sortedRows.slice(0, index).filter(other =>
-        Number(other.points || 0) === Number(person.points || 0) &&
-        (season.byUser[other.user_id]?.wins || 0) === (phase.wins || 0) && Number(other.points || 0) * Number(person.decided_picks || 0) === Number(person.points || 0) * Number(other.decided_picks || 0)
-      ).length;
-      const tiedGroupSize = sortedRows.filter(other =>
-        Number(other.points || 0) === Number(person.points || 0) &&
-        (season.byUser[other.user_id]?.wins || 0) === (phase.wins || 0)
-      ).length;
+      const sameScoreBefore = sortedRows.slice(0,index).filter(other=>sameRank(other,person)).length;
+      const tiedGroupSize = sortedRows.filter(other=>sameRank(other,person)).length;
       const position = hasDecidedGames ? (index + 1 - sameScoreBefore) : null;
       const isTied = tiedGroupSize > 1;
       const uniqueLeader = position === 1 && !topTied;
