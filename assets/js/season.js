@@ -15,12 +15,40 @@
     const rounds=[...groups.entries()].map(([date,gs])=>({date,games:gs.filter(valid)})).filter(r=>r.games.length&&r.games.every(isFinal)).sort((a,b)=>a.date.localeCompare(b.date));
     const state=Object.fromEntries(ids.map(id=>[id,{points:0,wins:0,decided:0,maxStreak:0,currentStreak:0,recentCorrect:0,recentTotal:0,accuracy:0,movement:0}]));
     const pos=Object.fromEntries(ids.map(id=>[id,[]])),results=[];
-    const order=()=>ids.slice().sort((a,b)=>(state[b].points-state[a].points)||(state[b].wins-state[a].wins)||String(names[a]).localeCompare(String(names[b]),"pt-BR"));
+    const order=()=>ids.slice().sort((a,b)=>{
+      const points=state[b].points-state[a].points;
+      if(points)return points;
+      const wins=state[b].wins-state[a].wins;
+      if(wins)return wins;
+      const aRate=state[a].decided?state[a].points/state[a].decided:0;
+      const bRate=state[b].decided?state[b].points/state[b].decided:0;
+      return bRate-aRate||String(names[a]).localeCompare(String(names[b]),"pt-BR");
+    });
     for(const r of rounds){
-      const scores=ids.map(userId=>{let correct=0,submitted=0;for(const g of r.games){const p=(byGame.get(String(g.id))||[]).find(x=>x.user_id===userId);if(!p)continue;submitted++;if(winner(g)===code(p.picked_team_code))correct++}state[userId].points+=correct;return{userId,correct,submitted,total:r.games.length}});
-      const best=Math.max(0,...scores.map(s=>s.correct)),leaders=scores.filter(s=>s.correct===best),winId=best>0&&leaders.length===1?leaders[0].userId:null;if(winId)state[winId].wins++;
+      const scores=ids.map(userId=>{
+        let correct=0,submitted=0;
+        for(const g of r.games){
+          const p=(byGame.get(String(g.id))||[]).find(x=>x.user_id===userId);
+          if(!p)continue;
+          submitted++;
+          if(winner(g)===code(p.picked_team_code))correct++;
+        }
+        state[userId].points+=correct;
+        state[userId].decided+=submitted;
+        return{userId,correct,submitted,total:r.games.length};
+      });
+      const best=Math.max(0,...scores.map(s=>s.correct));
+      const leaders=best>0?scores.filter(s=>s.correct===best):[];
+      const tied=leaders.length>1;
+      const winId=leaders.length===1?leaders[0].userId:null;
+      if(winId)state[winId].wins++;
       order().forEach((id,i)=>pos[id].push(i+1));
-      results.push({round_date:r.date,games:r.games,scores,best,winner_id:winId,winner_name:winId?names[winId]:null,tied:best>0&&leaders.length>1,leaders:leaders.map(x=>x.userId)});
+      results.push({
+        round_date:r.date,games:r.games,scores,best,
+        winner_id:winId,winner_name:winId?names[winId]:null,
+        tied,leaders:leaders.map(x=>x.userId),
+        outcome:winId?"winner":tied?"tie":"no_winner"
+      });
     }
     for(const id of ids){
       const decided=[];
