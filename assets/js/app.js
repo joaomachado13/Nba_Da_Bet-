@@ -188,7 +188,7 @@
     }
 
     const gameIds = games.map(game => String(game.id));
-    const roundLockAt = window.BolaoRules.computeLockAt(games);
+    const roundLockAt = lockAt || window.BolaoRules.computeLockAt(games);
     const locked = window.BolaoRules.isRoundLocked(roundLockAt);
 
     if (!locked) {
@@ -454,6 +454,29 @@
 
   function isLocked() {
     return window.BolaoRules.isRoundLocked(lockAt);
+  }
+
+  async function resolveLockAt() {
+    const regularLockAt = window.BolaoRules.computeLockAt(games);
+    if (!currentAccessToken) return regularLockAt;
+    try {
+      const params = new URLSearchParams({
+        select: "expires_at",
+        round_date: `eq.${todayKey()}`,
+        limit: "1"
+      });
+      const rows = await restRequest(`round_voting_overrides?${params}`);
+      const override = rows?.[0]?.expires_at;
+      return override ? new Date(override) : regularLockAt;
+    } catch (error) {
+      console.warn("[Bolão] Exceção temporária de votação indisponível:", error);
+      return regularLockAt;
+    }
+  }
+
+  function hasActiveVotingBonus() {
+    const regularLockAt = window.BolaoRules.computeLockAt(games);
+    return Boolean(lockAt && regularLockAt && lockAt.getTime() > regularLockAt.getTime() && Date.now() < lockAt.getTime());
   }
 
   function cleanForm(form) {
@@ -899,8 +922,14 @@
       familyRevealEl.hidden = true;
     }
     if (roundStateEl) { roundStateEl.textContent = "ABERTA"; roundStateEl.classList.remove("locked"); }
-    ruleTitle.textContent = "Palpites escondidos até o 1º jogo";
-    ruleText.textContent = "Quando a rodada fechar, os palpites dos participantes serão revelados.";
+    if (hasActiveVotingBonus()) {
+      ruleTitle.textContent = "Bônus de votação ativo";
+      ruleText.textContent = "Excepcionalmente hoje, todos têm 15 minutos extras a partir da publicação desta atualização. Os palpites continuam escondidos até o prazo terminar.";
+      if (roundStateEl) roundStateEl.textContent = "BÔNUS ATIVO";
+    } else {
+      ruleTitle.textContent = "Palpites escondidos até o 1º jogo";
+      ruleText.textContent = "Quando a rodada fechar, os palpites dos participantes serão revelados.";
+    }
 
     const hours = Math.floor(ms / 3600000);
     const minutes = Math.floor((ms % 3600000) / 60000);
@@ -1016,8 +1045,8 @@
     loadProfile().catch(error => console.warn("[Bolão] Perfil indisponível:", error));
     document.querySelector("#todayLabel").textContent = formatRoundDate(todayKey());
     games = await resolveGames();
+    lockAt = await resolveLockAt();
     await Promise.all([loadPredictions(), loadRoundConfirmation()]);
-    lockAt = window.BolaoRules.computeLockAt(games);
     renderGames();
     Promise.allSettled([renderMiniRanking(), renderNextRound()]).then(results => {
       if (results[0].status === "rejected") {
@@ -1041,8 +1070,8 @@
       try {
         const freshGames = await loadGamesFromSupabase();
         if (freshGames) games = freshGames;
+        lockAt = await resolveLockAt();
         await Promise.all([loadPredictions(), loadRoundConfirmation()]);
-        lockAt = window.BolaoRules.computeLockAt(games);
         renderGames();
         await Promise.allSettled([renderMiniRanking(), renderNextRound()]);
         updateRoundStatus();
